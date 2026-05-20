@@ -1,0 +1,778 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CourseReady — Are You Ready for College?</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --navy:    #0b1f4a;
+      --navy-mid:#122860;
+      --gold:    #f5c842;
+      --gold-dim:#c9a82c;
+      --cream:   #fdf8ee;
+      --white:   #ffffff;
+      --slate:   #8898bb;
+      --text:    #1a2e5a;
+      --radius:  14px;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--cream);
+      color: var(--text);
+      overflow-x: hidden;
+    }
+
+    body::before {
+      content: '';
+      position: fixed; inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    nav {
+      position: fixed; top: 0; left: 0; right: 0;
+      z-index: 100;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 18px 6vw;
+      background: rgba(11,31,74,0.92);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid rgba(245,200,66,0.15);
+    }
+
+    .nav-logo {
+      display: flex; align-items: center; gap: 10px;
+      text-decoration: none;
+    }
+    .nav-logo .logo-icon {
+      width: 36px; height: 36px;
+      background: var(--gold);
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .nav-logo .logo-icon svg { width: 20px; height: 20px; color: var(--navy); }
+    .nav-logo span {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.25rem;
+      color: var(--white);
+      letter-spacing: 0.01em;
+    }
+    .nav-logo span b { color: var(--gold); }
+
+    .nav-links {
+      display: flex; align-items: center; gap: 28px;
+      list-style: none;
+    }
+    .nav-links a {
+      color: rgba(255,255,255,0.7);
+      text-decoration: none;
+      font-size: 0.9rem;
+      font-weight: 500;
+      transition: color 0.2s;
+    }
+    .nav-links a:hover { color: var(--gold); }
+
+    .btn-nav {
+      background: var(--gold);
+      color: var(--navy) !important;
+      padding: 8px 20px;
+      border-radius: 8px;
+      font-weight: 600 !important;
+      transition: background 0.2s, transform 0.15s !important;
+    }
+    .btn-nav:hover { background: var(--gold-dim) !important; transform: translateY(-1px); }
+
+    .hero {
+      position: relative;
+      min-height: 100vh;
+      background: var(--navy);
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      text-align: center;
+      padding: 120px 6vw 80px;
+      overflow: hidden;
+    }
+
+    .hero::after {
+      content: '';
+      position: absolute;
+      width: 700px; height: 700px;
+      background: radial-gradient(circle, rgba(245,200,66,0.10) 0%, transparent 70%);
+      top: 50%; left: 50%;
+      transform: translate(-50%, -55%);
+      pointer-events: none;
+    }
+
+    .hero-tag {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: rgba(245,200,66,0.12);
+      border: 1px solid rgba(245,200,66,0.3);
+      color: var(--gold);
+      font-size: 0.78rem;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      padding: 6px 14px;
+      border-radius: 100px;
+      margin-bottom: 28px;
+      animation: fadeUp 0.6s ease both;
+    }
+
+    .hero h1 {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(2.6rem, 6vw, 5rem);
+      font-weight: 900;
+      color: var(--white);
+      line-height: 1.1;
+      max-width: 820px;
+      animation: fadeUp 0.7s 0.1s ease both;
+    }
+    .hero h1 em { font-style: normal; color: var(--gold); }
+
+    .hero-sub {
+      margin-top: 24px;
+      font-size: clamp(1rem, 2vw, 1.2rem);
+      color: var(--slate);
+      max-width: 560px;
+      line-height: 1.7;
+      font-weight: 400;
+      animation: fadeUp 0.7s 0.2s ease both;
+    }
+
+    .hero-cta {
+      margin-top: 44px;
+      display: flex; gap: 14px; flex-wrap: wrap; justify-content: center;
+      animation: fadeUp 0.7s 0.3s ease both;
+    }
+
+    .btn-primary {
+      background: var(--gold);
+      color: var(--navy);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 1rem;
+      font-weight: 700;
+      padding: 15px 36px;
+      border: none;
+      border-radius: var(--radius);
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-flex; align-items: center; gap: 8px;
+      transition: background 0.2s, transform 0.15s, box-shadow 0.2s;
+      box-shadow: 0 4px 24px rgba(245,200,66,0.3);
+    }
+    .btn-primary:hover {
+      background: var(--gold-dim);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 32px rgba(245,200,66,0.4);
+    }
+
+    .btn-outline {
+      background: transparent;
+      color: var(--white);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 1rem;
+      font-weight: 600;
+      padding: 15px 36px;
+      border: 1.5px solid rgba(255,255,255,0.25);
+      border-radius: var(--radius);
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-flex; align-items: center; gap: 8px;
+      transition: border-color 0.2s, background 0.2s, transform 0.15s;
+    }
+    .btn-outline:hover {
+      border-color: var(--gold);
+      color: var(--gold);
+      transform: translateY(-2px);
+    }
+
+    .hero-stats {
+      margin-top: 64px;
+      display: flex; gap: 48px; flex-wrap: wrap; justify-content: center;
+      animation: fadeUp 0.7s 0.4s ease both;
+    }
+    .stat {
+      text-align: center;
+      border-left: 2px solid rgba(245,200,66,0.3);
+      padding-left: 24px;
+    }
+    .stat:first-child { border-left: none; padding-left: 0; }
+    .stat-num {
+      font-family: 'Playfair Display', serif;
+      font-size: 2.2rem;
+      font-weight: 700;
+      color: var(--gold);
+      line-height: 1;
+    }
+    .stat-label {
+      font-size: 0.82rem;
+      color: var(--slate);
+      margin-top: 4px;
+      letter-spacing: 0.04em;
+    }
+
+    .scroll-hint {
+      position: absolute; bottom: 32px; left: 50%; transform: translateX(-50%);
+      display: flex; flex-direction: column; align-items: center; gap: 6px;
+      color: var(--slate);
+      font-size: 0.75rem;
+      letter-spacing: 0.06em;
+      animation: bounce 2s 1s infinite;
+    }
+
+    .section {
+      padding: 100px 6vw;
+      position: relative; z-index: 1;
+    }
+
+    .section-label {
+      font-size: 0.78rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--gold-dim);
+      margin-bottom: 14px;
+    }
+
+    .section-title {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(2rem, 4vw, 3rem);
+      font-weight: 900;
+      color: var(--navy);
+      line-height: 1.15;
+      max-width: 600px;
+    }
+
+    .steps-grid {
+      margin-top: 64px;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 28px;
+    }
+
+    .step-card {
+      background: var(--white);
+      border-radius: 20px;
+      padding: 36px 28px;
+      position: relative;
+      border: 1px solid rgba(11,31,74,0.08);
+      box-shadow: 0 2px 16px rgba(11,31,74,0.06);
+      transition: transform 0.25s, box-shadow 0.25s;
+      overflow: hidden;
+    }
+    .step-card::before {
+      content: attr(data-num);
+      position: absolute;
+      top: -12px; right: 20px;
+      font-family: 'Playfair Display', serif;
+      font-size: 6rem;
+      font-weight: 900;
+      color: rgba(11,31,74,0.05);
+      line-height: 1;
+      pointer-events: none;
+    }
+    .step-card:hover { transform: translateY(-6px); box-shadow: 0 12px 40px rgba(11,31,74,0.12); }
+
+    .step-icon {
+      width: 48px; height: 48px;
+      background: rgba(245,200,66,0.15);
+      border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      margin-bottom: 20px;
+      color: var(--gold-dim);
+    }
+    .step-icon svg { width: 24px; height: 24px; }
+
+    .step-card h3 {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: var(--navy);
+      margin-bottom: 10px;
+    }
+    .step-card p { font-size: 0.9rem; color: #5a6f96; line-height: 1.65; }
+
+    .courses-section {
+      background: var(--navy);
+      padding: 80px 0;
+      overflow: hidden;
+    }
+    .courses-section .inner { padding: 0 6vw; margin-bottom: 36px; }
+    .courses-section .section-label { color: rgba(245,200,66,0.6); }
+    .courses-section .section-title { color: var(--white); }
+
+    .marquee-wrap {
+      display: flex;
+      gap: 16px;
+      animation: marquee 30s linear infinite;
+      width: max-content;
+    }
+    .marquee-wrap:hover { animation-play-state: paused; }
+
+    .course-chip {
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.12);
+      color: rgba(255,255,255,0.85);
+      padding: 10px 20px;
+      border-radius: 100px;
+      font-size: 0.88rem;
+      font-weight: 500;
+      white-space: nowrap;
+      cursor: default;
+      transition: background 0.2s, border-color 0.2s;
+    }
+    .course-chip:hover {
+      background: rgba(245,200,66,0.12);
+      border-color: rgba(245,200,66,0.4);
+      color: var(--gold);
+    }
+
+    .gamification-section {
+      padding: 100px 6vw;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 80px;
+      align-items: center;
+    }
+    @media (max-width: 860px) {
+      .gamification-section { grid-template-columns: 1fr; gap: 48px; }
+    }
+
+    .game-preview {
+      background: var(--navy);
+      border-radius: 24px;
+      padding: 36px;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 24px 60px rgba(11,31,74,0.2);
+    }
+    .game-preview::before {
+      content: '';
+      position: absolute; top: -60px; right: -60px;
+      width: 200px; height: 200px;
+      background: radial-gradient(circle, rgba(245,200,66,0.15), transparent 70%);
+    }
+
+    .xp-bar-wrap { margin-bottom: 28px; }
+    .xp-label {
+      display: flex; justify-content: space-between;
+      font-size: 0.8rem;
+      color: var(--slate);
+      margin-bottom: 8px;
+    }
+    .xp-label span:first-child { color: var(--gold); font-weight: 600; display: flex; align-items: center; gap: 6px; }
+    .xp-bar {
+      height: 8px;
+      background: rgba(255,255,255,0.08);
+      border-radius: 100px;
+      overflow: hidden;
+    }
+    .xp-fill {
+      height: 100%;
+      width: 68%;
+      background: linear-gradient(90deg, var(--gold-dim), var(--gold));
+      border-radius: 100px;
+      animation: fillBar 2s 0.5s ease both;
+    }
+
+    .badges-row {
+      display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 24px;
+    }
+    .badge-pill {
+      display: flex; align-items: center; gap: 6px;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 100px;
+      padding: 6px 14px;
+      font-size: 0.8rem;
+      color: rgba(255,255,255,0.8);
+    }
+    .badge-pill.earned { border-color: rgba(245,200,66,0.4); color: var(--gold); background: rgba(245,200,66,0.08); }
+
+    .score-card {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 14px;
+      padding: 20px;
+      display: flex; align-items: center; gap: 20px;
+    }
+    .score-ring {
+      flex-shrink: 0;
+      width: 72px; height: 72px;
+      border-radius: 50%;
+      background: conic-gradient(var(--gold) 0deg 252deg, rgba(255,255,255,0.08) 252deg);
+      display: flex; align-items: center; justify-content: center;
+      position: relative;
+    }
+    .score-ring::before {
+      content: '';
+      position: absolute;
+      width: 52px; height: 52px;
+      border-radius: 50%;
+      background: var(--navy);
+    }
+    .score-ring span {
+      position: relative; z-index: 1;
+      font-family: 'Playfair Display', serif;
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--gold);
+    }
+    .score-info h4 { color: var(--white); font-size: 1rem; margin-bottom: 4px; }
+    .score-info p { color: var(--slate); font-size: 0.82rem; }
+
+    .game-text .section-title { max-width: none; }
+    .game-text p { margin-top: 20px; font-size: 1rem; color: #5a6f96; line-height: 1.75; }
+
+    .perks-list {
+      margin-top: 32px;
+      display: flex; flex-direction: column; gap: 14px;
+      list-style: none;
+    }
+    .perks-list li {
+      display: flex; align-items: flex-start; gap: 14px;
+      font-size: 0.95rem;
+      color: var(--text);
+    }
+    .perk-icon {
+      width: 36px; height: 36px; flex-shrink: 0;
+      background: rgba(245,200,66,0.12);
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      color: var(--gold-dim);
+    }
+    .perk-icon svg { width: 18px; height: 18px; }
+    .perks-list strong { display: block; font-weight: 600; color: var(--navy); }
+
+    .why-section {
+      background: var(--navy);
+      padding: 100px 6vw;
+      text-align: center;
+    }
+    .why-section .section-label { color: rgba(245,200,66,0.6); }
+    .why-section .section-title { color: var(--white); margin: 0 auto 60px; text-align: center; }
+
+    .why-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 24px;
+    }
+    .why-card {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 18px;
+      padding: 32px 24px;
+      transition: background 0.2s, border-color 0.2s, transform 0.25s;
+    }
+    .why-card:hover {
+      background: rgba(245,200,66,0.06);
+      border-color: rgba(245,200,66,0.25);
+      transform: translateY(-4px);
+    }
+    .why-card .wi {
+      width: 44px; height: 44px;
+      background: rgba(245,200,66,0.1);
+      border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 16px;
+      color: var(--gold);
+    }
+    .why-card .wi svg { width: 22px; height: 22px; }
+    .why-card h3 { font-family: 'Playfair Display', serif; font-size: 1.05rem; color: var(--white); margin-bottom: 10px; }
+    .why-card p { font-size: 0.85rem; color: var(--slate); line-height: 1.65; }
+
+    .cta-section {
+      padding: 100px 6vw;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+    .cta-section::before {
+      content: '';
+      position: absolute; inset: 0;
+      background: radial-gradient(ellipse at 50% 0%, rgba(245,200,66,0.08) 0%, transparent 65%);
+      pointer-events: none;
+    }
+    .cta-section .section-title { margin: 0 auto 16px; text-align: center; }
+    .cta-section p { font-size: 1.05rem; color: #5a6f96; margin-bottom: 40px; }
+
+    footer {
+      background: var(--navy);
+      padding: 36px 6vw;
+      display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap;
+      gap: 16px;
+      border-top: 1px solid rgba(255,255,255,0.06);
+    }
+    .footer-logo { font-family: 'Playfair Display', serif; font-size: 1.1rem; color: var(--white); }
+    .footer-logo b { color: var(--gold); }
+    footer p { font-size: 0.82rem; color: var(--slate); }
+    .footer-links { display: flex; gap: 20px; }
+    .footer-links a { font-size: 0.82rem; color: var(--slate); text-decoration: none; transition: color 0.2s; }
+    .footer-links a:hover { color: var(--gold); }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(28px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes bounce {
+      0%, 100% { transform: translateX(-50%) translateY(0); }
+      50%       { transform: translateX(-50%) translateY(8px); }
+    }
+    @keyframes marquee {
+      from { transform: translateX(0); }
+      to   { transform: translateX(-50%); }
+    }
+    @keyframes fillBar {
+      from { width: 0; }
+      to   { width: 68%; }
+    }
+
+    .reveal {
+      opacity: 0;
+      transform: translateY(32px);
+      transition: opacity 0.65s ease, transform 0.65s ease;
+    }
+    .reveal.visible { opacity: 1; transform: none; }
+
+    @media (max-width: 640px) { .nav-links { display: none; } }
+  </style>
+</head>
+<body>
+
+<nav>
+  <a href="index.html" class="nav-logo">
+    <div class="logo-icon">
+      <i data-lucide="graduation-cap"></i>
+    </div>
+    <span>Course<b>Ready</b></span>
+  </a>
+  <ul class="nav-links">
+    <li><a href="#how">How It Works</a></li>
+    <li><a href="#courses">Courses</a></li>
+    <li><a href="#gamification">Features</a></li>
+    <li><a href="login.html" class="btn-nav">Start Quiz</a></li>
+  </ul>
+</nav>
+
+<section class="hero">
+  <div class="hero-tag">
+    <i data-lucide="map-pin" style="width:14px;height:14px;"></i>
+    Built for Filipino Students
+  </div>
+  <h1>Are You Ready for <em>College?</em><br>Find Out Now.</h1>
+  <p class="hero-sub">
+    CourseReady gives you a personalized, CHED-anchored quiz for your exact college course —
+    so you walk into day one with clarity and confidence.
+  </p>
+  <div class="hero-cta">
+    <a href="login.html" class="btn-primary">
+      Take the Free Quiz
+      <i data-lucide="arrow-right"></i>
+    </a>
+    <a href="#how" class="btn-outline">
+      <i data-lucide="play-circle"></i>
+      See How It Works
+    </a>
+  </div>
+  <div class="hero-stats">
+    <div class="stat">
+      <div class="stat-num">50+</div>
+      <div class="stat-label">PH College Courses</div>
+    </div>
+    <div class="stat">
+      <div class="stat-num">CHED</div>
+      <div class="stat-label">Curriculum Anchored</div>
+    </div>
+    <div class="stat">
+      <div class="stat-num">Free</div>
+      <div class="stat-label">No Download Needed</div>
+    </div>
+    <div class="stat">
+      <div class="stat-num">AI</div>
+      <div class="stat-label">Powered by LLaMA 3.3</div>
+    </div>
+  </div>
+  <div class="scroll-hint">
+    <span>SCROLL</span>
+    <i data-lucide="chevron-down"></i>
+  </div>
+</section>
+
+<section class="section" id="how">
+  <div class="section-label">The Process</div>
+  <h2 class="section-title">From Zero to<br>Quiz-Ready in Minutes</h2>
+  <div class="steps-grid">
+    <div class="step-card reveal" data-num="1">
+      <div class="step-icon"><i data-lucide="book-open"></i></div>
+      <h3>Pick Your Course</h3>
+      <p>Choose from 50+ PH college courses — BS Nursing, BS IT, AB Comm, BS Accountancy, and more.</p>
+    </div>
+    <div class="step-card reveal" data-num="2">
+      <div class="step-icon"><i data-lucide="sliders-horizontal"></i></div>
+      <h3>Customize Your Subjects</h3>
+      <p>Remove subjects you already know or add your own. Set how many questions per topic.</p>
+    </div>
+    <div class="step-card reveal" data-num="3">
+      <div class="step-icon"><i data-lucide="bot"></i></div>
+      <h3>AI Generates Your Quiz</h3>
+      <p>Our AI builds a fresh quiz anchored to CHED, PRC, and DepEd K-12 standards — every time.</p>
+    </div>
+    <div class="step-card reveal" data-num="4">
+      <div class="step-icon"><i data-lucide="bar-chart-2"></i></div>
+      <h3>Get Your Readiness Score</h3>
+      <p>See your score, topic breakdown, and confidence rating so you know exactly where to focus.</p>
+    </div>
+  </div>
+</section>
+
+<section class="courses-section" id="courses">
+  <div class="inner">
+    <div class="section-label">Supported Programs</div>
+    <h2 class="section-title">Your Course Is Here</h2>
+  </div>
+  <div style="overflow:hidden;">
+    <div class="marquee-wrap" id="marquee"></div>
+  </div>
+</section>
+
+<section class="gamification-section" id="gamification">
+  <div class="game-preview reveal">
+    <div class="xp-bar-wrap">
+      <div class="xp-label">
+        <span><i data-lucide="zap"></i> Level 4 — Scholar</span>
+        <span>680 / 1000 XP</span>
+      </div>
+      <div class="xp-bar"><div class="xp-fill"></div></div>
+    </div>
+    <div class="badges-row">
+      <div class="badge-pill earned"><i data-lucide="flame"></i> 7-Day Streak</div>
+      <div class="badge-pill earned"><i data-lucide="trophy"></i> Perfect Score</div>
+      <div class="badge-pill earned"><i data-lucide="target"></i> First Quiz</div>
+      <div class="badge-pill"><i data-lucide="star"></i> Top Student</div>
+    </div>
+    <div class="score-card">
+      <div class="score-ring"><span>70%</span></div>
+      <div class="score-info">
+        <h4>BS Nursing Readiness</h4>
+        <p>Strong in Anatomy • Review: Pharmacology</p>
+      </div>
+    </div>
+  </div>
+  <div class="game-text reveal">
+    <div class="section-label">Gamification</div>
+    <h2 class="section-title">Study Smarter,<br>Stay Motivated</h2>
+    <p>College prep is a grind — CourseReady makes it feel like a game. Earn XP, keep your streak alive, and unlock badges as you improve.</p>
+    <ul class="perks-list">
+      <li>
+        <div class="perk-icon"><i data-lucide="zap"></i></div>
+        <div><strong>XP Points & Levels</strong>Earn XP for every correct answer and level up from Freshman to Dean's Lister.</div>
+      </li>
+      <li>
+        <div class="perk-icon"><i data-lucide="flame"></i></div>
+        <div><strong>Streaks</strong>Consecutive correct answers multiply your XP. Don't break the chain.</div>
+      </li>
+      <li>
+        <div class="perk-icon"><i data-lucide="trophy"></i></div>
+        <div><strong>Milestone Badges</strong>First quiz, perfect score, 5-day streak — every win is recognized.</div>
+      </li>
+      <li>
+        <div class="perk-icon"><i data-lucide="bar-chart-2"></i></div>
+        <div><strong>Readiness Score</strong>A clear percentage per subject so you know exactly where you stand.</div>
+      </li>
+    </ul>
+  </div>
+</section>
+
+<section class="why-section">
+  <div class="section-label">Competitive Edge</div>
+  <h2 class="section-title">Why CourseReady?</h2>
+  <div class="why-grid">
+    <div class="why-card reveal">
+      <div class="wi"><i data-lucide="flag"></i></div>
+      <h3>100% Philippine Curriculum</h3>
+      <p>Anchored to CHED, PRC, and DepEd K-12 — not some generic global standard.</p>
+    </div>
+    <div class="why-card reveal">
+      <div class="wi"><i data-lucide="crosshair"></i></div>
+      <h3>Course-Specific</h3>
+      <p>Not generic college prep. Every quiz is built for your exact course and subjects.</p>
+    </div>
+    <div class="why-card reveal">
+      <div class="wi"><i data-lucide="settings-2"></i></div>
+      <h3>Fully Customizable</h3>
+      <p>Add or remove subjects freely. Control the number of questions per session.</p>
+    </div>
+    <div class="why-card reveal">
+      <div class="wi"><i data-lucide="wallet"></i></div>
+      <h3>Completely Free</h3>
+      <p>No subscriptions. No downloads. Open your browser and start quizzing.</p>
+    </div>
+  </div>
+</section>
+
+<section class="cta-section">
+  <div class="section-label">Get Started</div>
+  <h2 class="section-title">Ready to Find Out<br>How Ready You Are?</h2>
+  <p>It takes less than 2 minutes to set up your first quiz.</p>
+  <a href="login.html" class="btn-primary">
+    Take the Free Quiz
+    <i data-lucide="arrow-right"></i>
+  </a>
+</section>
+
+<footer>
+  <div class="footer-logo">Course<b>Ready</b></div>
+  <p id="footer-year">Built for Filipino students. Free to use.</p>
+  <div class="footer-links">
+    <a href="#">About</a>
+    <a href="#">Privacy</a>
+    <a href="#">Contact</a>
+  </div>
+</footer>
+
+<script>
+  lucide.createIcons();
+
+  // Replaces PHP courses array + marquee echo
+  const courses = [
+    "BS Nursing","BS Information Technology","BS Accountancy","BS Psychology","BS Education",
+    "BS Architecture","BS Civil Engineering","BS Computer Science","BS Business Administration",
+    "AB Communication","BS Criminology","BS Pharmacy","BS Physical Therapy","BS Nutrition",
+    "BS Hotel & Restaurant Management","BS Tourism Management","BS Social Work","BS Biology",
+    "BS Medical Technology","AB Political Science","BS Electrical Engineering","BS Industrial Engineering",
+    "BS Agricultural Engineering","AB English","BS Environmental Science","BS Marine Biology",
+    "BS Dentistry","BS Radiologic Technology","BS Occupational Therapy","AB Philosophy",
+  ];
+  const doubled = [...courses, ...courses];
+  const marquee = document.getElementById('marquee');
+  marquee.innerHTML = doubled.map(c => `<span class="course-chip">${c}</span>`).join('');
+
+  // Replaces PHP date('Y')
+  document.getElementById('footer-year').textContent =
+    `Built for Filipino students. Free to use. © ${new Date().getFullYear()} CourseReady`;
+
+  // Scroll reveal
+  const reveals = document.querySelectorAll('.reveal');
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach((e, i) => {
+      if (e.isIntersecting) {
+        setTimeout(() => e.target.classList.add('visible'), i * 80);
+        observer.unobserve(e.target);
+      }
+    });
+  }, { threshold: 0.12 });
+  reveals.forEach(el => observer.observe(el));
+</script>
+
+</body>
+</html>
