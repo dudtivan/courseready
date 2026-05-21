@@ -30,7 +30,7 @@ export default function handler(req, res) {
 
   if (action === 'logout') {
     // Clear the session cookie
-    res.setHeader('Set-Cookie', 'cr_user=; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=0');
+    res.setHeader('Set-Cookie', 'cr_user=; Path=/; Secure; SameSite=Lax; Max-Age=0');
     return res.redirect(302, '/');
   }
 

@@ -87,7 +87,7 @@ export default async function handler(req, res) {
   // Max-Age: 7 days
   res.setHeader(
     'Set-Cookie',
-    `cr_user=${cookieValue}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=${60 * 60 * 24 * 7}`
+    `cr_user=${cookieValue}; Path=/; Secure; SameSite=Lax; Max-Age=${60 * 60 * 24 * 7}`
   );
 
   // ── STEP 7: Redirect to dashboard ──
