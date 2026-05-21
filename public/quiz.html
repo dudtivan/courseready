@@ -6,182 +6,692 @@
   <title>CourseReady — Quiz</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,700&family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet" />
   <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
     :root {
-      --navy:#0b1f4a; --navy-mid:#122860; --navy-light:#1a3470;
-      --gold:#f5c842; --gold-dim:#c9a82c;
-      --white:#ffffff; --slate:#8898bb; --radius:14px;
-      --success:#4ade80; --danger:#f87171;
+      --navy:      #08193a;
+      --navy-mid:  #0f2354;
+      --navy-light:#162d6a;
+      --gold:      #f5c842;
+      --gold-dim:  #c9a82c;
+      --gold-glow: rgba(245,200,66,0.18);
+      --cream:     #fdf8ee;
+      --white:     #ffffff;
+      --slate:     #7a90bb;
+      --text:      #1a2e5a;
+      --radius:    14px;
+      --success:   #4ade80;
+      --danger:    #f87171;
+      --warn:      #fb923c;
     }
+
     html { scroll-behavior: smooth; }
-    body { font-family:'DM Sans',sans-serif; background:var(--navy); color:var(--white); min-height:100vh; overflow-x:hidden; }
-    body::before { content:''; position:fixed; inset:0; background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E"); pointer-events:none; z-index:0; }
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--navy);
+      color: var(--white);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
 
-    nav { position:fixed; top:0; left:0; right:0; z-index:100; display:flex; align-items:center; justify-content:space-between; padding:16px 6vw; background:rgba(11,31,74,0.95); backdrop-filter:blur(12px); border-bottom:1px solid rgba(245,200,66,0.15); }
-    .nav-logo { display:flex; align-items:center; gap:10px; text-decoration:none; }
-    .nav-logo .logo-icon { width:36px; height:36px; background:var(--gold); border-radius:8px; display:flex; align-items:center; justify-content:center; color:var(--navy); }
-    .nav-logo .logo-icon svg { width:20px; height:20px; }
-    .nav-logo span { font-family:'Playfair Display',serif; font-size:1.2rem; color:var(--white); }
-    .nav-logo span b { color:var(--gold); }
-    .nav-back { display:flex; align-items:center; gap:6px; color:var(--slate); font-size:0.85rem; font-weight:500; text-decoration:none; transition:color 0.2s; }
-    .nav-back:hover { color:var(--gold); }
-    .nav-back svg { width:16px; height:16px; }
+    /* Noise overlay */
+    body::before {
+      content: '';
+      position: fixed; inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.035'/%3E%3C/svg%3E");
+      pointer-events: none; z-index: 0;
+    }
 
-    .screen { display:none; min-height:100vh; padding:88px 6vw 60px; position:relative; z-index:1; }
-    .screen.active { display:flex; flex-direction:column; align-items:center; }
+    /* Stars bg */
+    body::after {
+      content: '';
+      position: fixed; inset: 0;
+      background-image: radial-gradient(1px 1px at 20% 30%, rgba(255,255,255,0.3) 0%, transparent 100%),
+        radial-gradient(1px 1px at 80% 10%, rgba(255,255,255,0.2) 0%, transparent 100%),
+        radial-gradient(1px 1px at 50% 70%, rgba(255,255,255,0.15) 0%, transparent 100%),
+        radial-gradient(1px 1px at 10% 80%, rgba(255,255,255,0.2) 0%, transparent 100%),
+        radial-gradient(2px 2px at 90% 60%, rgba(245,200,66,0.2) 0%, transparent 100%);
+      pointer-events: none; z-index: 0;
+    }
 
-    /* ── SCREEN 0: CINEMATIC INTRO ── */
-    #screen-intro { justify-content:center; align-items:center; text-align:center; background:radial-gradient(ellipse at 50% 40%, #122860 0%, #0b1f4a 70%); }
-    .intro-stars { position:absolute; inset:0; overflow:hidden; pointer-events:none; }
-    .star { position:absolute; width:2px; height:2px; background:var(--white); border-radius:50%; animation:twinkle var(--d,3s) var(--delay,0s) infinite alternate; }
-    @keyframes twinkle { from{opacity:0.1} to{opacity:0.9} }
-    .intro-inner { max-width:580px; position:relative; z-index:2; }
-    .intro-tag { display:inline-block; font-size:0.72rem; font-weight:700; letter-spacing:0.15em; text-transform:uppercase; color:rgba(245,200,66,0.6); margin-bottom:20px; animation:fadeUp 0.8s 0.2s ease both; }
-    .intro-headline { font-family:'Playfair Display',serif; font-size:clamp(2.2rem,5vw,3.8rem); font-weight:900; line-height:1.15; margin-bottom:16px; animation:fadeUp 0.8s 0.5s ease both; }
-    .intro-headline em { font-style:normal; color:var(--gold); }
-    .intro-sub { font-size:1.05rem; color:rgba(255,255,255,0.65); line-height:1.65; margin-bottom:40px; animation:fadeUp 0.8s 0.8s ease both; }
-    .intro-sub em { color:var(--gold); font-style:normal; font-weight:600; }
-    .btn-begin { display:inline-flex; align-items:center; gap:10px; background:var(--gold); color:var(--navy); font-family:'DM Sans',sans-serif; font-size:1rem; font-weight:700; padding:16px 40px; border:none; border-radius:50px; cursor:pointer; box-shadow:0 0 50px rgba(245,200,66,0.35); transition:transform 0.2s,box-shadow 0.2s; animation:fadeUp 0.8s 1.1s ease both; }
-    .btn-begin:hover { transform:scale(1.05); box-shadow:0 0 70px rgba(245,200,66,0.55); }
-    .btn-begin svg { width:18px; height:18px; }
-    .intro-pills { display:flex; gap:12px; justify-content:center; margin-top:44px; flex-wrap:wrap; animation:fadeUp 0.8s 1.4s ease both; }
-    .intro-pill { background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.12); border-radius:100px; padding:8px 18px; font-size:0.78rem; color:var(--slate); }
-    .intro-pill span { color:var(--gold); font-weight:600; }
+    /* ── NAV ── */
+    nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 14px 6vw;
+      background: rgba(8,25,58,0.96);
+      backdrop-filter: blur(16px);
+      border-bottom: 1px solid rgba(245,200,66,0.12);
+    }
+    .nav-logo {
+      display: flex; align-items: center; gap: 10px; text-decoration: none;
+    }
+    .nav-logo .logo-icon {
+      width: 34px; height: 34px; background: var(--gold);
+      border-radius: 8px; display: flex; align-items: center; justify-content: center; color: var(--navy);
+    }
+    .nav-logo .logo-icon svg { width: 18px; height: 18px; }
+    .nav-logo span { font-family: 'Playfair Display', serif; font-size: 1.15rem; color: var(--white); }
+    .nav-logo span b { color: var(--gold); }
+    .nav-back {
+      display: flex; align-items: center; gap: 6px;
+      color: var(--slate); font-size: 0.82rem; font-weight: 500;
+      text-decoration: none; transition: color 0.2s;
+    }
+    .nav-back:hover { color: var(--gold); }
+    .nav-back svg { width: 15px; height: 15px; }
 
-    /* ── SCREEN 1: COURSE PICKER ── */
-    #screen-pick { justify-content:flex-start; padding-top:100px; }
-    .pick-header { text-align:center; margin-bottom:40px; animation:fadeUp 0.6s ease both; }
-    .pick-header .label { font-size:0.75rem; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; color:rgba(245,200,66,0.6); margin-bottom:10px; }
-    .pick-header h1 { font-family:'Playfair Display',serif; font-size:clamp(1.8rem,3.5vw,2.8rem); font-weight:900; line-height:1.15; }
-    .pick-header h1 em { font-style:normal; color:var(--gold); }
-    .pick-header p { font-size:0.95rem; color:var(--slate); margin-top:10px; }
-    .pick-box { width:100%; max-width:680px; animation:fadeUp 0.6s 0.1s ease both; }
-    .search-wrap { position:relative; margin-bottom:20px; }
-    .search-wrap svg { position:absolute; left:16px; top:50%; transform:translateY(-50%); width:18px; height:18px; color:var(--slate); pointer-events:none; }
-    #course-search { width:100%; padding:14px 16px 14px 46px; background:rgba(255,255,255,0.07); border:1px solid rgba(255,255,255,0.15); border-radius:var(--radius); color:var(--white); font-family:'DM Sans',sans-serif; font-size:0.95rem; outline:none; transition:border-color 0.2s,background 0.2s; }
-    #course-search::placeholder { color:var(--slate); }
-    #course-search:focus { border-color:rgba(245,200,66,0.5); background:rgba(255,255,255,0.1); }
-    .course-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); gap:10px; max-height:340px; overflow-y:auto; padding-right:4px; }
-    .course-grid::-webkit-scrollbar { width:4px; }
-    .course-grid::-webkit-scrollbar-thumb { background:rgba(245,200,66,0.3); border-radius:2px; }
-    .course-chip { padding:11px 16px; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); border-radius:10px; font-size:0.82rem; font-weight:500; color:rgba(255,255,255,0.8); cursor:pointer; transition:all 0.15s; text-align:left; }
-    .course-chip:hover { background:rgba(245,200,66,0.1); border-color:rgba(245,200,66,0.35); color:var(--gold); }
-    .course-chip.selected { background:rgba(245,200,66,0.15); border-color:var(--gold); color:var(--gold); font-weight:600; }
-    .no-results { grid-column:1/-1; text-align:center; padding:24px; color:var(--slate); font-size:0.88rem; }
-    .pick-controls { margin-top:24px; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); border-radius:16px; padding:20px 24px; display:none; flex-direction:column; gap:16px; animation:fadeUp 0.3s ease both; }
-    .pick-controls.visible { display:flex; }
+    /* ── SCREENS ── */
+    .screen {
+      display: none;
+      min-height: 100vh;
+      padding: 80px 6vw 80px;
+      position: relative; z-index: 1;
+    }
+    .screen.active { display: flex; flex-direction: column; align-items: center; }
 
-    /* Inspiration card */
-    .inspo-card { display:flex; align-items:flex-start; gap:14px; background:linear-gradient(135deg,rgba(245,200,66,0.08),rgba(245,200,66,0.02)); border:1px solid rgba(245,200,66,0.22); border-radius:14px; padding:16px; }
-    .inspo-emoji { font-size:2.4rem; flex-shrink:0; line-height:1; margin-top:2px; }
-    .inspo-name { font-weight:700; font-size:0.95rem; color:var(--gold); margin-bottom:2px; }
-    .inspo-role { font-size:0.75rem; color:var(--slate); margin-bottom:6px; }
-    .inspo-achievement { font-size:0.82rem; color:rgba(255,255,255,0.8); line-height:1.55; }
-    .inspo-footer { font-size:0.72rem; color:rgba(245,200,66,0.5); margin-top:6px; font-style:italic; }
+    /* ────────────────────────────────────
+       SCREEN 0: CINEMATIC INTRO
+    ──────────────────────────────────── */
+    #screen-intro {
+      justify-content: center; align-items: center; text-align: center;
+      background: radial-gradient(ellipse 70% 60% at 50% 40%, rgba(245,200,66,0.07) 0%, transparent 70%);
+    }
+    .intro-inner { max-width: 640px; }
+    .intro-days-badge {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: rgba(245,200,66,0.1); border: 1px solid rgba(245,200,66,0.25);
+      border-radius: 100px; padding: 8px 20px;
+      font-size: 0.8rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase;
+      color: var(--gold); margin-bottom: 28px;
+      animation: fadeUp 0.8s ease both;
+    }
+    .intro-days-badge svg { width: 14px; height: 14px; }
+    .intro-h1 {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(2rem, 5vw, 3.4rem);
+      font-weight: 900; line-height: 1.15;
+      margin-bottom: 20px;
+      animation: fadeUp 0.8s 0.1s ease both;
+    }
+    .intro-h1 em { font-style: normal; color: var(--gold); }
+    .intro-desc {
+      font-size: 1rem; color: var(--slate); line-height: 1.7;
+      margin-bottom: 36px; max-width: 480px; margin-left: auto; margin-right: auto;
+      animation: fadeUp 0.8s 0.2s ease both;
+    }
+    .intro-archetypes {
+      display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px;
+      margin-bottom: 36px;
+      animation: fadeUp 0.8s 0.3s ease both;
+    }
+    .archetype-pill {
+      display: flex; align-items: center; gap: 10px;
+      background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 12px; padding: 12px 16px;
+      font-size: 0.82rem; color: rgba(255,255,255,0.7);
+      transition: all 0.2s;
+    }
+    .archetype-pill svg { width: 16px; height: 16px; color: var(--gold); flex-shrink: 0; }
+    .btn-begin {
+      background: var(--gold); color: var(--navy);
+      font-family: 'DM Sans', sans-serif; font-size: 1.05rem; font-weight: 700;
+      padding: 16px 40px; border: none; border-radius: var(--radius);
+      cursor: pointer; display: inline-flex; align-items: center; gap: 10px;
+      transition: background 0.2s, transform 0.15s, box-shadow 0.2s;
+      box-shadow: 0 4px 30px rgba(245,200,66,0.3);
+      animation: fadeUp 0.8s 0.4s ease both;
+    }
+    .btn-begin:hover { background: var(--gold-dim); transform: translateY(-2px); box-shadow: 0 10px 40px rgba(245,200,66,0.4); }
+    .btn-begin svg { width: 18px; height: 18px; }
 
-    .selected-course-label { display:flex; align-items:center; gap:10px; }
-    .selected-course-label svg { width:18px; height:18px; color:var(--gold); }
-    .selected-course-label span { font-size:0.88rem; color:var(--slate); }
-    .selected-course-label strong { color:var(--gold); }
-    .qcount-row { display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
-    .qcount-label { font-size:0.85rem; color:var(--slate); white-space:nowrap; }
-    .diff-legend { display:flex; gap:16px; flex-wrap:wrap; }
-    .diff-badge { display:flex; align-items:center; gap:6px; font-size:0.72rem; color:var(--slate); }
-    .diff-dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
-    .btn-start { width:100%; background:var(--gold); color:var(--navy); font-family:'DM Sans',sans-serif; font-size:1rem; font-weight:700; padding:15px; border:none; border-radius:var(--radius); cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px; transition:background 0.2s,transform 0.15s,box-shadow 0.2s; box-shadow:0 4px 20px rgba(245,200,66,0.25); }
-    .btn-start:hover { background:var(--gold-dim); transform:translateY(-2px); box-shadow:0 8px 28px rgba(245,200,66,0.35); }
-    .btn-start svg { width:18px; height:18px; }
+    /* ────────────────────────────────────
+       SCREEN 1: COURSE PICKER
+    ──────────────────────────────────── */
+    #screen-pick { justify-content: flex-start; padding-top: 96px; }
 
-    /* ── SCREEN 2: GENERATING ── */
-    #screen-gen { justify-content:center; align-items:center; text-align:center; }
-    .gen-inner { max-width:600px; width:100%; }
-    .gen-header { margin-bottom:32px; animation:fadeUp 0.5s ease both; }
-    .gen-header h2 { font-family:'Playfair Display',serif; font-size:clamp(1.5rem,3vw,2rem); font-weight:900; margin-bottom:8px; }
-    .gen-header h2 em { font-style:normal; color:var(--gold); }
-    .gen-header p { color:var(--slate); font-size:0.88rem; }
-    .gen-stream-box { background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.1); border-radius:16px; padding:20px 24px; text-align:left; min-height:120px; font-size:0.82rem; color:rgba(255,255,255,0.6); line-height:1.7; overflow:hidden; animation:fadeUp 0.5s 0.1s ease both; }
-    .gen-stream-text { word-break:break-all; }
-    .cursor-blink { display:inline-block; width:2px; height:14px; background:var(--gold); margin-left:2px; animation:blink 0.8s infinite; vertical-align:middle; }
+    .pick-header { text-align: center; margin-bottom: 36px; animation: fadeUp 0.6s ease both; }
+    .pick-header .label {
+      font-size: 0.72rem; font-weight: 700; letter-spacing: 0.12em;
+      text-transform: uppercase; color: rgba(245,200,66,0.6); margin-bottom: 10px;
+    }
+    .pick-header h1 {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(1.7rem, 3.5vw, 2.6rem); font-weight: 900; line-height: 1.15;
+    }
+    .pick-header h1 em { font-style: normal; color: var(--gold); }
+    .pick-header p { font-size: 0.9rem; color: var(--slate); margin-top: 8px; }
+
+    .pick-box { width: 100%; max-width: 680px; animation: fadeUp 0.6s 0.1s ease both; }
+
+    .search-wrap { position: relative; margin-bottom: 16px; }
+    .search-wrap svg { position: absolute; left: 16px; top: 50%; transform: translateY(-50%); width: 17px; height: 17px; color: var(--slate); pointer-events: none; }
+    #course-search {
+      width: 100%; padding: 13px 16px 13px 44px;
+      background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.13);
+      border-radius: var(--radius); color: var(--white);
+      font-family: 'DM Sans', sans-serif; font-size: 0.92rem;
+      outline: none; transition: border-color 0.2s, background 0.2s;
+    }
+    #course-search::placeholder { color: var(--slate); }
+    #course-search:focus { border-color: rgba(245,200,66,0.45); background: rgba(255,255,255,0.09); }
+
+    .course-grid {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(198px, 1fr));
+      gap: 9px; max-height: 320px; overflow-y: auto; padding-right: 4px;
+    }
+    .course-grid::-webkit-scrollbar { width: 3px; }
+    .course-grid::-webkit-scrollbar-track { background: rgba(255,255,255,0.04); border-radius: 2px; }
+    .course-grid::-webkit-scrollbar-thumb { background: rgba(245,200,66,0.3); border-radius: 2px; }
+
+    .course-chip {
+      padding: 10px 14px;
+      background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.09);
+      border-radius: 10px; font-size: 0.8rem; font-weight: 500;
+      color: rgba(255,255,255,0.75); cursor: pointer; transition: all 0.15s; text-align: left;
+    }
+    .course-chip:hover { background: rgba(245,200,66,0.08); border-color: rgba(245,200,66,0.3); color: var(--gold); }
+    .course-chip.selected { background: rgba(245,200,66,0.14); border-color: var(--gold); color: var(--gold); font-weight: 600; }
+    .no-results { grid-column: 1/-1; text-align: center; padding: 24px; color: var(--slate); font-size: 0.85rem; }
+
+    .pick-controls {
+      margin-top: 20px;
+      background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.09);
+      border-radius: 16px; padding: 20px 22px;
+      display: none; flex-direction: column; gap: 16px;
+      animation: fadeUp 0.3s ease both;
+    }
+    .pick-controls.visible { display: flex; }
+
+    .selected-course-label { display: flex; align-items: center; gap: 10px; }
+    .selected-course-label svg { width: 17px; height: 17px; color: var(--gold); }
+    .selected-course-label span { font-size: 0.85rem; color: var(--slate); }
+    .selected-course-label strong { color: var(--gold); }
+
+    .qcount-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+    .qcount-label { font-size: 0.83rem; color: var(--slate); }
+    .qcount-display { font-size: 1.1rem; font-weight: 700; color: var(--gold); }
+
+    input[type="range"] {
+      -webkit-appearance: none; width: 100%; height: 4px;
+      background: rgba(255,255,255,0.1); border-radius: 100px;
+      outline: none; cursor: pointer;
+    }
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none; width: 18px; height: 18px;
+      border-radius: 50%; background: var(--gold);
+      border: 2px solid var(--navy); cursor: pointer;
+      box-shadow: 0 0 8px rgba(245,200,66,0.4);
+    }
+
+    /* Slider labels */
+    .slider-row { display: flex; align-items: center; gap: 12px; }
+    .slider-edge { font-size: 0.7rem; color: var(--slate); flex-shrink: 0; }
+    .slider-wrap { flex: 1; }
+
+    .questions-hint {
+      font-size: 0.75rem; color: rgba(245,200,66,0.55);
+      display: flex; align-items: center; gap: 6px;
+    }
+    .questions-hint svg { width: 12px; height: 12px; }
+
+    .btn-start {
+      width: 100%; background: var(--gold); color: var(--navy);
+      font-family: 'DM Sans', sans-serif; font-size: 1rem; font-weight: 700;
+      padding: 14px; border: none; border-radius: var(--radius);
+      cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;
+      transition: background 0.2s, transform 0.15s, box-shadow 0.2s;
+      box-shadow: 0 4px 24px rgba(245,200,66,0.25);
+    }
+    .btn-start:hover { background: var(--gold-dim); transform: translateY(-2px); box-shadow: 0 8px 32px rgba(245,200,66,0.35); }
+    .btn-start svg { width: 17px; height: 17px; }
+
+    /* ────────────────────────────────────
+       SCREEN 2: GENERATING
+    ──────────────────────────────────── */
+    #screen-gen { justify-content: center; align-items: center; text-align: center; }
+    .gen-inner { max-width: 580px; width: 100%; }
+    .gen-header { margin-bottom: 28px; animation: fadeUp 0.5s ease both; }
+    .gen-header h2 { font-family: 'Playfair Display', serif; font-size: clamp(1.4rem, 3vw, 1.9rem); font-weight: 900; margin-bottom: 8px; }
+    .gen-header h2 em { font-style: normal; color: var(--gold); }
+    .gen-header p { color: var(--slate); font-size: 0.85rem; }
+    .gen-stream-box {
+      background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.09);
+      border-radius: 14px; padding: 18px 22px; text-align: left; min-height: 110px;
+      font-size: 0.78rem; color: rgba(255,255,255,0.5); line-height: 1.7;
+      font-family: 'DM Mono', monospace; overflow: hidden;
+      animation: fadeUp 0.5s 0.1s ease both;
+    }
+    .gen-stream-text { word-break: break-all; }
+    .cursor-blink { display: inline-block; width: 2px; height: 13px; background: var(--gold); margin-left: 2px; animation: blink 0.8s infinite; vertical-align: middle; }
     @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
-    .gen-progress { margin-top:20px; animation:fadeUp 0.5s 0.2s ease both; }
-    .gen-progress-bar { height:4px; background:rgba(255,255,255,0.08); border-radius:100px; overflow:hidden; }
-    .gen-progress-fill { height:100%; width:0%; background:linear-gradient(90deg,var(--gold-dim),var(--gold)); border-radius:100px; transition:width 0.4s ease; }
-    .gen-progress-label { margin-top:8px; font-size:0.78rem; color:var(--slate); text-align:right; }
+    .gen-progress { margin-top: 18px; animation: fadeUp 0.5s 0.2s ease both; }
+    .gen-progress-bar { height: 3px; background: rgba(255,255,255,0.07); border-radius: 100px; overflow: hidden; }
+    .gen-progress-fill { height: 100%; width: 0%; background: linear-gradient(90deg, var(--gold-dim), var(--gold)); border-radius: 100px; transition: width 0.4s ease; }
+    .gen-progress-label { margin-top: 8px; font-size: 0.75rem; color: var(--slate); text-align: right; }
 
-    /* ── SCREEN 3: QUIZ ── */
-    #screen-quiz { align-items:stretch; max-width:780px; margin:0 auto; width:100%; }
-    .quiz-topbar { display:flex; align-items:center; justify-content:space-between; margin-bottom:20px; padding-bottom:16px; border-bottom:1px solid rgba(255,255,255,0.08); animation:fadeUp 0.5s ease both; flex-wrap:wrap; gap:10px; }
-    .quiz-course-tag { display:flex; align-items:center; gap:8px; background:rgba(245,200,66,0.1); border:1px solid rgba(245,200,66,0.25); border-radius:100px; padding:6px 14px; font-size:0.78rem; font-weight:600; color:var(--gold); }
-    .quiz-course-tag svg { width:13px; height:13px; }
-    .quiz-meta { font-size:0.82rem; color:var(--slate); }
+    /* ────────────────────────────────────
+       CAMPUS MAP PROGRESS BAR (sticky)
+    ──────────────────────────────────── */
+    #campus-map {
+      position: fixed; bottom: 0; left: 0; right: 0; z-index: 200;
+      background: rgba(8,25,58,0.97);
+      backdrop-filter: blur(16px);
+      border-top: 1px solid rgba(245,200,66,0.14);
+      padding: 10px 6vw 12px;
+      display: none;
+    }
+    #campus-map.visible { display: block; }
+    .campus-label {
+      font-size: 0.68rem; font-weight: 700; letter-spacing: 0.09em; text-transform: uppercase;
+      color: var(--slate); margin-bottom: 8px;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .campus-label span { color: var(--gold); }
+    .campus-buildings {
+      display: flex; gap: 6px; align-items: center;
+    }
+    .campus-building {
+      display: flex; flex-direction: column; align-items: center; gap: 3px;
+      flex: 1; cursor: default;
+    }
+    .campus-icon-wrap {
+      width: 36px; height: 36px; border-radius: 10px;
+      background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08);
+      display: flex; align-items: center; justify-content: center;
+      transition: all 0.3s; position: relative;
+    }
+    .campus-icon-wrap svg { width: 16px; height: 16px; color: rgba(255,255,255,0.25); transition: color 0.3s; }
+    .campus-icon-wrap.unlocked { background: rgba(245,200,66,0.12); border-color: rgba(245,200,66,0.4); }
+    .campus-icon-wrap.unlocked svg { color: var(--gold); }
+    .campus-icon-wrap.unlocked::after {
+      content: ''; position: absolute; inset: -1px;
+      border-radius: 10px; background: radial-gradient(circle at center, rgba(245,200,66,0.15), transparent 70%);
+      pointer-events: none;
+    }
+    .campus-name { font-size: 0.55rem; color: rgba(255,255,255,0.3); text-align: center; font-weight: 600; letter-spacing: 0.04em; line-height: 1.2; transition: color 0.3s; }
+    .campus-name.unlocked { color: rgba(245,200,66,0.7); }
 
-    /* Campus Map */
-    .campus-map { background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:16px; padding:16px 20px; margin-bottom:24px; animation:fadeUp 0.5s ease both; }
-    .campus-map-label { font-size:0.7rem; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; color:var(--slate); margin-bottom:14px; }
-    .campus-buildings { display:flex; align-items:center; justify-content:space-between; }
-    .campus-building { display:flex; flex-direction:column; align-items:center; gap:4px; flex:0 0 auto; opacity:0.25; transition:all 0.4s ease; }
-    .campus-building.unlocked { opacity:1; }
-    .b-icon { font-size:1.5rem; line-height:1; filter:grayscale(1); transition:filter 0.4s ease; }
-    .campus-building.unlocked .b-icon { filter:none; animation:popIn 0.4s ease; }
-    @keyframes popIn { 0%{transform:scale(0.5)} 60%{transform:scale(1.3)} 100%{transform:scale(1)} }
-    .b-name { font-size:0.62rem; color:var(--slate); white-space:nowrap; }
-    .campus-building.unlocked .b-name { color:var(--gold); }
-    .campus-connector { flex:1; height:2px; background:rgba(255,255,255,0.1); border-radius:1px; margin:0 4px; margin-bottom:16px; transition:background 0.4s ease; }
-    .campus-connector.active { background:rgba(245,200,66,0.5); }
-    .campus-progress-text { font-size:0.72rem; color:var(--slate); text-align:right; margin-top:8px; }
+    .campus-progress-track { flex: 1; height: 2px; background: rgba(255,255,255,0.07); border-radius: 100px; }
+    .campus-progress-fill { height: 100%; width: 0%; background: var(--gold); border-radius: 100px; transition: width 0.5s ease; }
 
-    /* Questions */
-    .questions-list { display:flex; flex-direction:column; gap:20px; }
-    .q-card { background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); border-radius:18px; padding:24px; opacity:0; transform:translateY(16px); transition:opacity 0.4s ease,transform 0.4s ease,border-color 0.2s; }
-    .q-card.visible { opacity:1; transform:none; }
-    .q-card.answered { border-color:rgba(255,255,255,0.16); }
-    .q-top { display:flex; align-items:flex-start; gap:12px; margin-bottom:16px; }
-    .q-num { flex-shrink:0; width:28px; height:28px; background:rgba(245,200,66,0.12); border:1px solid rgba(245,200,66,0.25); border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:0.75rem; font-weight:700; color:var(--gold); }
-    .q-subject { font-size:0.72rem; font-weight:600; letter-spacing:0.07em; text-transform:uppercase; color:var(--slate); margin-bottom:4px; }
-    .q-text { font-size:0.95rem; line-height:1.6; color:rgba(255,255,255,0.9); font-weight:500; }
-    .diff-tag { display:inline-flex; align-items:center; gap:4px; font-size:0.65rem; font-weight:700; letter-spacing:0.05em; text-transform:uppercase; padding:2px 8px; border-radius:100px; }
-    .diff-tag.easy { background:rgba(74,222,128,0.12); color:#4ade80; }
-    .diff-tag.medium { background:rgba(245,200,66,0.12); color:var(--gold); }
-    .diff-tag.normal, .diff-tag.hard { background:rgba(248,113,113,0.12); color:#f87171; }
-    .q-choices { display:flex; flex-direction:column; gap:8px; }
-    .choice-btn { width:100%; text-align:left; padding:12px 16px; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.1); border-radius:10px; color:rgba(255,255,255,0.75); font-family:'DM Sans',sans-serif; font-size:0.88rem; cursor:pointer; transition:all 0.15s; }
-    .choice-btn:hover:not(:disabled) { background:rgba(245,200,66,0.08); border-color:rgba(245,200,66,0.3); color:var(--white); }
-    .choice-btn.selected { background:rgba(245,200,66,0.12); border-color:rgba(245,200,66,0.5); color:var(--gold); }
-    .choice-btn:disabled { cursor:default; }
+    /* ────────────────────────────────────
+       SCREEN 3: QUIZ
+    ──────────────────────────────────── */
+    #screen-quiz {
+      align-items: stretch; max-width: 780px; margin: 0 auto; width: 100%;
+      padding-bottom: 140px; /* room for sticky campus map */
+    }
 
-    /* Hint */
-    .hint-row { margin-top:12px; }
-    .btn-hint { display:inline-flex; align-items:center; gap:6px; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); border-radius:8px; padding:6px 12px; font-family:'DM Sans',sans-serif; font-size:0.78rem; color:var(--slate); cursor:pointer; transition:all 0.15s; }
-    .btn-hint:hover:not(:disabled) { border-color:rgba(245,200,66,0.3); color:var(--gold); }
-    .btn-hint:disabled { opacity:0.4; cursor:default; }
-    .btn-hint svg { width:13px; height:13px; }
-    .hint-bubble { display:none; margin-top:8px; font-size:0.82rem; color:rgba(245,200,66,0.85); background:rgba(245,200,66,0.06); border-left:2px solid rgba(245,200,66,0.35); padding:10px 14px; border-radius:0 8px 8px 0; line-height:1.5; animation:fadeUp 0.3s ease both; }
-    .hint-bubble.show { display:block; }
+    .quiz-topbar {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 24px; padding-bottom: 14px;
+      border-bottom: 1px solid rgba(255,255,255,0.07);
+      animation: fadeUp 0.5s ease both; flex-wrap: wrap; gap: 10px;
+    }
+    .quiz-course-tag {
+      display: flex; align-items: center; gap: 8px;
+      background: rgba(245,200,66,0.09); border: 1px solid rgba(245,200,66,0.22);
+      border-radius: 100px; padding: 6px 14px;
+      font-size: 0.76rem; font-weight: 600; color: var(--gold);
+    }
+    .quiz-course-tag svg { width: 13px; height: 13px; }
+    .quiz-meta { font-size: 0.8rem; color: var(--slate); }
+
+    /* Dopamine streak bar */
+    .dopamine-bar {
+      background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.07);
+      border-radius: 12px; padding: 10px 16px;
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 20px; flex-wrap: wrap; gap: 8px;
+      animation: fadeUp 0.5s 0.05s ease both;
+    }
+    .dopamine-streak { display: flex; align-items: center; gap: 8px; font-size: 0.8rem; color: var(--slate); }
+    .dopamine-streak strong { color: var(--gold); }
+    .dopamine-streak svg { width: 15px; height: 15px; color: var(--gold); }
+    .dopamine-hint { font-size: 0.75rem; color: rgba(245,200,66,0.6); display: flex; align-items: center; gap: 5px; }
+    .dopamine-hint svg { width: 13px; height: 13px; }
+    .top-score-note { font-size: 0.73rem; color: var(--slate); }
+    .top-score-note span { color: var(--success); font-weight: 600; }
+
+    /* Hint tokens */
+    .hint-tokens { display: flex; align-items: center; gap: 6px; font-size: 0.75rem; color: var(--slate); }
+    .hint-token {
+      width: 22px; height: 22px; border-radius: 6px;
+      background: rgba(245,200,66,0.15); border: 1px solid rgba(245,200,66,0.35);
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; transition: all 0.15s;
+    }
+    .hint-token svg { width: 11px; height: 11px; color: var(--gold); }
+    .hint-token.used { background: rgba(255,255,255,0.04); border-color: rgba(255,255,255,0.08); cursor: default; }
+    .hint-token.used svg { color: rgba(255,255,255,0.2); }
+
+    /* Question cards */
+    .questions-list { display: flex; flex-direction: column; gap: 18px; }
+    .q-card {
+      background: rgba(255,255,255,0.035); border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 18px; padding: 22px;
+      opacity: 0; transform: translateY(14px);
+      transition: opacity 0.4s ease, transform 0.4s ease, border-color 0.2s;
+    }
+    .q-card.visible { opacity: 1; transform: none; }
+    .q-card.answered { border-color: rgba(255,255,255,0.13); }
+
+    .q-top { display: flex; align-items: flex-start; gap: 12px; margin-bottom: 14px; }
+    .q-num {
+      flex-shrink: 0; width: 26px; height: 26px;
+      background: rgba(245,200,66,0.11); border: 1px solid rgba(245,200,66,0.22);
+      border-radius: 7px; display: flex; align-items: center; justify-content: center;
+      font-size: 0.72rem; font-weight: 700; color: var(--gold);
+    }
+    .q-subject { font-size: 0.68rem; font-weight: 700; letter-spacing: 0.07em; text-transform: uppercase; color: var(--slate); margin-bottom: 4px; }
+    .q-text { font-size: 0.92rem; line-height: 1.6; color: rgba(255,255,255,0.9); font-weight: 500; }
+
+    /* Hint box (hidden by default) */
+    .q-hint-box {
+      background: rgba(245,200,66,0.06); border: 1px solid rgba(245,200,66,0.2);
+      border-radius: 10px; padding: 10px 14px; margin-bottom: 12px;
+      font-size: 0.8rem; color: rgba(255,255,255,0.7); line-height: 1.6;
+      display: none; animation: fadeUp 0.3s ease both;
+    }
+    .q-hint-box.show { display: block; }
+    .q-hint-header { font-size: 0.68rem; font-weight: 700; letter-spacing: 0.07em; text-transform: uppercase; color: var(--gold); margin-bottom: 5px; display: flex; align-items: center; gap: 5px; }
+    .q-hint-header svg { width: 11px; height: 11px; }
+    .q-hint-trigger {
+      display: inline-flex; align-items: center; gap: 5px;
+      font-size: 0.73rem; color: rgba(245,200,66,0.5); cursor: pointer;
+      border: none; background: none; padding: 0; margin-bottom: 10px;
+      transition: color 0.15s; font-family: 'DM Sans', sans-serif;
+    }
+    .q-hint-trigger:hover { color: var(--gold); }
+    .q-hint-trigger svg { width: 12px; height: 12px; }
+
+    .q-choices { display: flex; flex-direction: column; gap: 7px; }
+    .choice-btn {
+      width: 100%; text-align: left;
+      padding: 11px 15px;
+      background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.09);
+      border-radius: 10px; color: rgba(255,255,255,0.72);
+      font-family: 'DM Sans', sans-serif; font-size: 0.86rem;
+      cursor: pointer; transition: all 0.15s; display: flex; align-items: center; gap: 10px;
+    }
+    .choice-letter {
+      flex-shrink: 0; width: 22px; height: 22px; border-radius: 6px;
+      background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.68rem; font-weight: 700; color: var(--slate);
+      transition: all 0.15s;
+    }
+    .choice-btn:hover:not(:disabled) { background: rgba(245,200,66,0.07); border-color: rgba(245,200,66,0.28); color: var(--white); }
+    .choice-btn:hover:not(:disabled) .choice-letter { background: rgba(245,200,66,0.12); border-color: rgba(245,200,66,0.4); color: var(--gold); }
+    .choice-btn.selected { background: rgba(245,200,66,0.11); border-color: rgba(245,200,66,0.45); color: var(--gold); }
+    .choice-btn.selected .choice-letter { background: rgba(245,200,66,0.2); border-color: var(--gold); color: var(--gold); }
+    .choice-btn:disabled { cursor: default; }
 
     /* Submit bar */
-    .submit-bar { margin-top:32px; padding-top:24px; border-top:1px solid rgba(255,255,255,0.08); display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:14px; animation:fadeUp 0.5s ease both; }
-    .answered-count { font-size:0.85rem; color:var(--slate); }
-    .answered-count span { color:var(--gold); font-weight:600; }
-    .hints-badge { font-size:0.72rem; color:var(--slate); margin-left:12px; }
-    .hints-badge b { color:var(--gold); }
-    .btn-submit { background:var(--gold); color:var(--navy); font-family:'DM Sans',sans-serif; font-size:0.95rem; font-weight:700; padding:13px 32px; border:none; border-radius:var(--radius); cursor:pointer; display:flex; align-items:center; gap:8px; transition:background 0.2s,transform 0.15s,box-shadow 0.2s,opacity 0.2s; box-shadow:0 4px 20px rgba(245,200,66,0.25); opacity:0.5; pointer-events:none; }
-    .btn-submit.ready { opacity:1; pointer-events:all; }
-    .btn-submit.ready:hover { background:var(--gold-dim); transform:translateY(-2px); }
-    .btn-submit svg { width:17px; height:17px; }
+    .submit-bar {
+      margin-top: 28px; padding-top: 22px;
+      border-top: 1px solid rgba(255,255,255,0.07);
+      display: flex; align-items: center; justify-content: space-between;
+      flex-wrap: wrap; gap: 12px; animation: fadeUp 0.5s ease both;
+    }
+    .answered-count { font-size: 0.82rem; color: var(--slate); }
+    .answered-count span { color: var(--gold); font-weight: 600; }
+    .dopamine-remaining { font-size: 0.72rem; color: rgba(245,200,66,0.5); margin-top: 3px; }
+    .btn-submit {
+      background: var(--gold); color: var(--navy);
+      font-family: 'DM Sans', sans-serif; font-size: 0.92rem; font-weight: 700;
+      padding: 12px 28px; border: none; border-radius: var(--radius);
+      cursor: pointer; display: flex; align-items: center; gap: 8px;
+      transition: background 0.2s, transform 0.15s, box-shadow 0.2s, opacity 0.2s;
+      box-shadow: 0 4px 20px rgba(245,200,66,0.22);
+      opacity: 0.45; pointer-events: none;
+    }
+    .btn-submit.ready { opacity: 1; pointer-events: all; }
+    .btn-submit.ready:hover { background: var(--gold-dim); transform: translateY(-2px); }
+    .btn-submit svg { width: 16px; height: 16px; }
 
-    /* Toast */
-    #toast { position:fixed; bottom:30px; left:50%; transform:translateX(-50%) translateY(90px); background:var(--navy-mid); border:1px solid rgba(245,200,66,0.3); border-radius:100px; padding:12px 24px; display:flex; align-items:center; gap:10px; font-size:0.88rem; font-weight:600; box-shadow:0 8px 32px rgba(0,0,0,0.5); z-index:200; transition:transform 0.4s cubic-bezier(0.34,1.56,0.64,1),opacity 0.4s ease; opacity:0; white-space:nowrap; }
-    #toast.show { transform:translateX(-50%) translateY(0); opacity:1; }
+    /* ────────────────────────────────────
+       SCREEN 4: RESULTS
+    ──────────────────────────────────── */
+    #screen-results { align-items: center; text-align: center; }
+    .results-inner { max-width: 680px; width: 100%; }
 
-    @keyframes fadeUp { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
-    @media (max-width:600px) { .course-grid{grid-template-columns:1fr 1fr} .b-name{font-size:0.55rem} }
+    /* Letter reveal effect */
+    .letter-envelope {
+      width: 80px; height: 60px; margin: 0 auto 24px;
+      position: relative; animation: envelopePop 0.8s cubic-bezier(0.34,1.56,0.64,1) both;
+    }
+    @keyframes envelopePop { from{opacity:0;transform:scale(0.5) translateY(20px)} to{opacity:1;transform:scale(1) translateY(0)} }
+    .envelope-body {
+      width: 80px; height: 55px; background: rgba(245,200,66,0.12);
+      border: 1.5px solid rgba(245,200,66,0.35); border-radius: 6px 6px 8px 8px;
+      position: absolute; bottom: 0;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .envelope-body svg { width: 22px; height: 22px; color: var(--gold); }
+    .envelope-flap {
+      width: 0; height: 0;
+      border-left: 40px solid transparent;
+      border-right: 40px solid transparent;
+      border-bottom: 30px solid rgba(245,200,66,0.22);
+      position: absolute; top: 0; left: 0;
+      animation: flapOpen 0.6s 0.5s ease both;
+      transform-origin: top center;
+    }
+    @keyframes flapOpen { 0%{transform:rotateX(0deg)} 100%{transform:rotateX(-150deg)} }
+
+    .results-admit-tag {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: rgba(245,200,66,0.08); border: 1px solid rgba(245,200,66,0.2);
+      border-radius: 100px; padding: 7px 18px;
+      font-size: 0.72rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(245,200,66,0.7);
+      margin-bottom: 20px; animation: fadeUp 0.6s 0.3s ease both;
+    }
+    .results-admit-tag svg { width: 12px; height: 12px; }
+
+    .big-ring {
+      width: 130px; height: 130px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 18px; position: relative;
+      animation: ringReveal 1s 0.5s cubic-bezier(0.34,1.56,0.64,1) both;
+    }
+    @keyframes ringReveal { from{opacity:0;transform:scale(0.6)} to{opacity:1;transform:scale(1)} }
+    .big-ring::before {
+      content: ''; position: absolute; inset: 0; border-radius: 50%;
+      background: conic-gradient(var(--ring-color, var(--gold)) 0deg var(--ring-deg, 0deg), rgba(255,255,255,0.05) var(--ring-deg, 0deg));
+    }
+    .big-ring::after {
+      content: ''; position: absolute; width: 94px; height: 94px; border-radius: 50%;
+      background: var(--navy);
+    }
+    .big-ring-inner { position: relative; z-index: 1; text-align: center; }
+    .big-ring-pct { font-family: 'Playfair Display', serif; font-size: 1.9rem; font-weight: 900; color: var(--white); line-height: 1; }
+    .big-ring-label { font-size: 0.68rem; color: var(--slate); margin-top: 2px; }
+
+    .results-verdict { font-family: 'Playfair Display', serif; font-size: 1.5rem; font-weight: 900; margin-bottom: 6px; animation: fadeUp 0.6s 0.6s ease both; }
+    .results-verdict.pass { color: var(--success); }
+    .results-verdict.fail { color: var(--danger); }
+    .results-sub { font-size: 0.88rem; color: var(--slate); animation: fadeUp 0.6s 0.7s ease both; }
+
+    /* Archetype result */
+    .archetype-result {
+      margin: 22px 0;
+      background: linear-gradient(135deg, rgba(245,200,66,0.08), rgba(245,200,66,0.03));
+      border: 1px solid rgba(245,200,66,0.2); border-radius: 18px;
+      padding: 22px 26px; text-align: left;
+      animation: fadeUp 0.6s 0.75s ease both;
+    }
+    .archetype-result-label {
+      font-size: 0.68rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase;
+      color: rgba(245,200,66,0.6); margin-bottom: 8px; display: flex; align-items: center; gap: 6px;
+    }
+    .archetype-result-label svg { width: 11px; height: 11px; }
+    .archetype-title { font-family: 'Playfair Display', serif; font-size: 1.4rem; font-weight: 900; color: var(--gold); margin-bottom: 6px; }
+    .archetype-desc { font-size: 0.85rem; color: rgba(255,255,255,0.72); line-height: 1.65; }
+
+    /* Inspiration card */
+    .inspiration-card {
+      background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 18px; padding: 22px 26px; text-align: left;
+      margin: 18px 0; animation: fadeUp 0.6s 0.85s ease both;
+      position: relative; overflow: hidden;
+    }
+    .inspiration-card::before {
+      content: ''; position: absolute; top: -60px; right: -60px;
+      width: 180px; height: 180px;
+      background: radial-gradient(circle, rgba(245,200,66,0.07), transparent 65%);
+    }
+    .inspiration-header { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
+    .inspiration-icon { width: 42px; height: 42px; border-radius: 12px; background: rgba(245,200,66,0.12); border: 1px solid rgba(245,200,66,0.25); display: flex; align-items: center; justify-content: center; }
+    .inspiration-icon svg { width: 20px; height: 20px; color: var(--gold); }
+    .inspiration-meta .label { font-size: 0.67rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--slate); }
+    .inspiration-meta .name { font-size: 0.95rem; font-weight: 700; color: var(--white); }
+    .inspiration-quote { font-size: 0.85rem; color: rgba(255,255,255,0.68); line-height: 1.7; font-style: italic; margin-bottom: 10px; }
+    .inspiration-career { font-size: 0.75rem; color: rgba(245,200,66,0.6); font-weight: 600; }
+
+    /* Dream board (career preview) */
+    .dream-board {
+      background: rgba(255,255,255,0.025); border: 1px solid rgba(255,255,255,0.07);
+      border-radius: 18px; padding: 22px 26px; text-align: left;
+      margin: 18px 0; animation: fadeUp 0.6s 0.9s ease both;
+    }
+    .dream-board h4 { font-size: 0.7rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--slate); margin-bottom: 16px; display: flex; align-items: center; gap: 6px; }
+    .dream-board h4 svg { width: 12px; height: 12px; }
+    .dream-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .dream-item {
+      background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.07);
+      border-radius: 12px; padding: 14px 16px;
+    }
+    .dream-item-label { font-size: 0.65rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--slate); margin-bottom: 4px; display: flex; align-items: center; gap: 4px; }
+    .dream-item-label svg { width: 10px; height: 10px; }
+    .dream-item-value { font-size: 0.88rem; font-weight: 600; color: rgba(255,255,255,0.85); }
+    .dream-item-value.salary { color: var(--success); }
+
+    /* AI feedback */
+    .motivation-card {
+      background: rgba(255,255,255,0.035); border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 18px; padding: 22px 26px; text-align: left;
+      margin: 18px 0; position: relative; overflow: hidden;
+      animation: fadeUp 0.6s 0.95s ease both;
+    }
+    .motivation-card::before {
+      content: ''; position: absolute; top: -40px; right: -40px;
+      width: 160px; height: 160px; background: radial-gradient(circle, rgba(245,200,66,0.09), transparent 65%);
+    }
+    .motivation-header { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+    .motivation-header svg { width: 17px; height: 17px; color: var(--gold); }
+    .motivation-header span { font-size: 0.7rem; font-weight: 700; letter-spacing: 0.09em; text-transform: uppercase; color: var(--gold); }
+    .motivation-text { font-size: 0.92rem; line-height: 1.75; color: rgba(255,255,255,0.82); font-style: italic; }
+    .motivation-cursor { display: inline-block; width: 2px; height: 14px; background: var(--gold); margin-left: 2px; animation: blink 0.8s infinite; vertical-align: middle; }
+
+    /* Wrong answers review */
+    .wrong-review {
+      background: rgba(248,113,113,0.04); border: 1px solid rgba(248,113,113,0.15);
+      border-radius: 18px; padding: 22px 26px; text-align: left;
+      margin: 18px 0; animation: fadeUp 0.6s 1s ease both;
+    }
+    .wrong-review h4 { font-size: 0.7rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(248,113,113,0.8); margin-bottom: 16px; display: flex; align-items: center; gap: 6px; }
+    .wrong-review h4 svg { width: 12px; height: 12px; }
+    .wrong-item { margin-bottom: 18px; padding-bottom: 18px; border-bottom: 1px solid rgba(255,255,255,0.05); }
+    .wrong-item:last-child { margin-bottom: 0; padding-bottom: 0; border-bottom: none; }
+    .wrong-item-q { font-size: 0.88rem; color: rgba(255,255,255,0.85); font-weight: 500; margin-bottom: 10px; line-height: 1.5; }
+    .wrong-item-row { display: flex; align-items: flex-start; gap: 8px; font-size: 0.8rem; margin-bottom: 6px; }
+    .wrong-item-row .badge {
+      flex-shrink: 0; padding: 3px 9px; border-radius: 6px; font-size: 0.67rem; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase;
+    }
+    .badge-wrong { background: rgba(248,113,113,0.15); color: var(--danger); border: 1px solid rgba(248,113,113,0.25); }
+    .badge-correct { background: rgba(74,222,128,0.12); color: var(--success); border: 1px solid rgba(74,222,128,0.2); }
+    .wrong-item-text { color: rgba(255,255,255,0.65); line-height: 1.55; }
+    .wrong-item-explain {
+      background: rgba(255,255,255,0.04); border-left: 2px solid rgba(245,200,66,0.3);
+      border-radius: 0 8px 8px 0; padding: 10px 14px; margin-top: 8px;
+      font-size: 0.78rem; color: rgba(255,255,255,0.6); line-height: 1.65;
+    }
+    .wrong-item-explain strong { color: var(--gold); font-size: 0.7rem; letter-spacing: 0.06em; text-transform: uppercase; display: block; margin-bottom: 4px; }
+
+    /* Topic breakdown */
+    .breakdown {
+      background: rgba(255,255,255,0.025); border: 1px solid rgba(255,255,255,0.07);
+      border-radius: 18px; padding: 22px 26px; text-align: left;
+      animation: fadeUp 0.6s 1.05s ease both; margin-bottom: 24px;
+    }
+    .breakdown h4 { font-size: 0.7rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--slate); margin-bottom: 16px; display: flex; align-items: center; gap: 6px; }
+    .breakdown h4 svg { width: 12px; height: 12px; }
+    .breakdown-list { display: flex; flex-direction: column; gap: 10px; }
+    .breakdown-row { display: flex; align-items: center; gap: 12px; }
+    .breakdown-subject { font-size: 0.8rem; color: rgba(255,255,255,0.65); flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .breakdown-bar-wrap { flex: 2; height: 5px; background: rgba(255,255,255,0.06); border-radius: 100px; overflow: hidden; }
+    .breakdown-bar-fill { height: 100%; border-radius: 100px; transition: width 1s ease; }
+    .breakdown-pct { font-size: 0.75rem; font-weight: 600; width: 34px; text-align: right; }
+
+    /* Share card */
+    .share-card {
+      background: linear-gradient(135deg, rgba(245,200,66,0.09), rgba(8,25,58,0.6));
+      border: 1px solid rgba(245,200,66,0.2); border-radius: 18px;
+      padding: 22px 26px; text-align: left; margin: 18px 0;
+      animation: fadeUp 0.6s 1.1s ease both;
+    }
+    .share-label { font-size: 0.7rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(245,200,66,0.6); margin-bottom: 8px; display: flex; align-items: center; gap: 6px; }
+    .share-label svg { width: 11px; height: 11px; }
+    .share-tagline { font-size: 0.9rem; color: rgba(255,255,255,0.8); margin-bottom: 12px; }
+    .share-tagline strong { color: var(--gold); }
+    .btn-share {
+      display: inline-flex; align-items: center; gap: 7px;
+      background: var(--gold); color: var(--navy);
+      font-family: 'DM Sans', sans-serif; font-size: 0.82rem; font-weight: 700;
+      padding: 9px 20px; border: none; border-radius: 10px; cursor: pointer;
+      transition: background 0.2s, transform 0.15s;
+    }
+    .btn-share:hover { background: var(--gold-dim); transform: translateY(-1px); }
+    .btn-share svg { width: 15px; height: 15px; }
+
+    /* Results actions */
+    .results-actions {
+      display: flex; gap: 12px; flex-wrap: wrap; justify-content: center;
+      animation: fadeUp 0.6s 1.15s ease both; margin-top: 20px;
+    }
+    .btn-primary {
+      background: var(--gold); color: var(--navy);
+      font-family: 'DM Sans', sans-serif; font-size: 0.92rem; font-weight: 700;
+      padding: 13px 26px; border: none; border-radius: var(--radius);
+      cursor: pointer; text-decoration: none;
+      display: inline-flex; align-items: center; gap: 8px;
+      transition: background 0.2s, transform 0.15s;
+      box-shadow: 0 4px 20px rgba(245,200,66,0.25);
+    }
+    .btn-primary:hover { background: var(--gold-dim); transform: translateY(-2px); }
+    .btn-primary svg { width: 16px; height: 16px; }
+    .btn-outline {
+      background: transparent; color: var(--white);
+      font-family: 'DM Sans', sans-serif; font-size: 0.92rem; font-weight: 600;
+      padding: 13px 26px; border: 1.5px solid rgba(255,255,255,0.18); border-radius: var(--radius);
+      cursor: pointer; text-decoration: none;
+      display: inline-flex; align-items: center; gap: 8px;
+      transition: border-color 0.2s, color 0.2s, transform 0.15s;
+    }
+    .btn-outline:hover { border-color: var(--gold); color: var(--gold); transform: translateY(-2px); }
+    .btn-outline svg { width: 16px; height: 16px; }
+
+    @keyframes fadeUp { from{opacity:0;transform:translateY(18px)} to{opacity:1;transform:translateY(0)} }
+
+    @media (max-width: 600px) {
+      .course-grid { grid-template-columns: 1fr 1fr; }
+      .intro-archetypes { grid-template-columns: 1fr; }
+      .dream-grid { grid-template-columns: 1fr; }
+      .campus-buildings { gap: 3px; }
+      .campus-icon-wrap { width: 30px; height: 30px; }
+      .campus-icon-wrap svg { width: 13px; height: 13px; }
+      .campus-name { font-size: 0.48rem; }
+    }
   </style>
 </head>
 <body>
 
+<!-- NAV -->
 <nav>
   <a href="index.html" class="nav-logo">
     <div class="logo-icon"><i data-lucide="graduation-cap"></i></div>
@@ -192,27 +702,38 @@
   </a>
 </nav>
 
+<!-- ── STICKY CAMPUS MAP ── -->
+<div id="campus-map">
+  <div class="campus-label">
+    Your Campus Journey <span id="campus-progress-text">0 / 8 buildings unlocked</span>
+  </div>
+  <div class="campus-buildings" id="campus-buildings">
+    <!-- Injected by JS -->
+  </div>
+</div>
+
 <!-- ── SCREEN 0: CINEMATIC INTRO ── -->
 <div class="screen active" id="screen-intro">
-  <div class="intro-stars" id="intro-stars"></div>
   <div class="intro-inner">
-    <div class="intro-tag">✦ Your journey starts here</div>
-    <h1 class="intro-headline">
-      You're <em>6 months</em> away<br>from college.
-    </h1>
-    <p class="intro-sub">
-      Let's find out <em>which path is meant for you.</em><br>
-      No pressure — just your future calling.
-    </p>
-    <button class="btn-begin" onclick="showScreen('screen-pick'); lucide.createIcons();">
-      Begin My Journey <i data-lucide="arrow-right"></i>
-    </button>
-    <div class="intro-pills">
-      <div class="intro-pill"><span>50+</span> Courses</div>
-      <div class="intro-pill"><span>AI-Powered</span> Questions</div>
-      <div class="intro-pill"><span>CHED</span> Aligned</div>
-      <div class="intro-pill"><span>Easy → Hard</span> Difficulty</div>
+    <div class="intro-days-badge">
+      <i data-lucide="calendar"></i>
+      <span id="days-to-college">You're <strong id="college-days">—</strong> days away from college</span>
     </div>
+    <h1 class="intro-h1">
+      Which path is<br><em>meant for you?</em>
+    </h1>
+    <p class="intro-desc">
+      College is in August. Before you walk through those gates, let's find out exactly who you're about to become.
+    </p>
+    <div class="intro-archetypes">
+      <div class="archetype-pill"><i data-lucide="microscope"></i> The Future Researcher</div>
+      <div class="archetype-pill"><i data-lucide="briefcase"></i> The Born Entrepreneur</div>
+      <div class="archetype-pill"><i data-lucide="palette"></i> The Creative Disruptor</div>
+      <div class="archetype-pill"><i data-lucide="heart-handshake"></i> The Compassionate Leader</div>
+    </div>
+    <button class="btn-begin" id="btn-begin">
+      Find My Archetype <i data-lucide="arrow-right"></i>
+    </button>
   </div>
 </div>
 
@@ -226,27 +747,28 @@
   <div class="pick-box">
     <div class="search-wrap">
       <i data-lucide="search"></i>
-      <input type="text" id="course-search" placeholder="Search courses e.g. BS Nursing, BS IT…" autocomplete="off" />
+      <input type="text" id="course-search" placeholder="Search e.g. BS Nursing, BS IT…" autocomplete="off" />
     </div>
     <div class="course-grid" id="course-grid"></div>
     <div class="pick-controls" id="pick-controls">
-      <div id="inspo-wrap"></div>
       <div class="selected-course-label">
         <i data-lucide="book-open"></i>
         <span>Selected: <strong id="selected-course-name">—</strong></span>
       </div>
       <div class="qcount-row">
-        <span class="qcount-label">How many questions? <strong id="qcount-display" style="color:var(--gold)">10</strong></span>
+        <span class="qcount-label">Questions in your quiz</span>
+        <span class="qcount-display" id="qcount-display">10</span>
       </div>
-      <div style="display:flex;align-items:center;gap:12px;">
-        <span style="font-size:0.75rem;color:var(--slate)">1</span>
-        <input type="range" id="qcount-slider" min="1" max="100" value="10" style="flex:1;accent-color:var(--gold);cursor:pointer;" />
-        <span style="font-size:0.75rem;color:var(--slate)">100</span>
+      <div class="slider-row">
+        <span class="slider-edge">1</span>
+        <div class="slider-wrap">
+          <input type="range" id="qcount-slider" min="1" max="100" value="10" />
+        </div>
+        <span class="slider-edge">100</span>
       </div>
-      <div class="diff-legend">
-        <div class="diff-badge"><div class="diff-dot" style="background:#4ade80"></div>Starts easy</div>
-        <div class="diff-badge"><div class="diff-dot" style="background:var(--gold)"></div>Gets moderate</div>
-        <div class="diff-badge"><div class="diff-dot" style="background:#f87171"></div>Ends challenging</div>
+      <div class="questions-hint">
+        <i data-lucide="info"></i>
+        Questions are ordered to build your confidence as you go.
       </div>
       <button class="btn-start" id="btn-start">
         Generate My Quiz <i data-lucide="sparkles"></i>
@@ -259,8 +781,8 @@
 <div class="screen" id="screen-gen">
   <div class="gen-inner">
     <div class="gen-header">
-      <h2>Generating Your <em id="gen-course-name">Quiz</em>…</h2>
-      <p>AI is crafting questions from easy to challenging — CHED curriculum aligned. 🧠</p>
+      <h2>Building Your <em id="gen-course-name">Quiz</em>…</h2>
+      <p>AI is crafting questions based on the CHED curriculum. One moment!</p>
     </div>
     <div class="gen-stream-box">
       <div class="gen-stream-text" id="gen-stream-text"></div>
@@ -283,29 +805,24 @@
     <div class="quiz-meta" id="quiz-meta">0 questions</div>
   </div>
 
-  <!-- Campus Map Progress -->
-  <div class="campus-map">
-    <div class="campus-map-label">📍 Your Campus Journey</div>
-    <div class="campus-buildings">
-      <div class="campus-building" id="cb-0"><div class="b-icon">🏛️</div><div class="b-name">Entrance</div></div>
-      <div class="campus-connector" id="cc-0"></div>
-      <div class="campus-building" id="cb-1"><div class="b-icon">📚</div><div class="b-name">Library</div></div>
-      <div class="campus-connector" id="cc-1"></div>
-      <div class="campus-building" id="cb-2"><div class="b-icon">🏫</div><div class="b-name">Classroom</div></div>
-      <div class="campus-connector" id="cc-2"></div>
-      <div class="campus-building" id="cb-3"><div class="b-icon">🔬</div><div class="b-name">Laboratory</div></div>
-      <div class="campus-connector" id="cc-3"></div>
-      <div class="campus-building" id="cb-4"><div class="b-icon">🏆</div><div class="b-name">Main Hall</div></div>
+  <div class="dopamine-bar">
+    <div class="dopamine-streak">
+      <i data-lucide="flame"></i>
+      <span>Streak: <strong id="streak-count">0</strong> in a row</span>
     </div>
-    <div class="campus-progress-text" id="campus-progress-text">Answer questions to unlock your campus!</div>
+    <div class="hint-tokens" id="hint-tokens-display">
+      <i data-lucide="lightbulb" style="width:13px;height:13px;color:var(--slate)"></i>
+      Hints:
+    </div>
+    <div class="top-score-note">Top students score <span>82%</span> avg</div>
   </div>
 
   <div class="questions-list" id="questions-list"></div>
 
   <div class="submit-bar">
-    <div class="answered-count">
-      Answered: <span id="answered-count">0</span> / <span id="total-count">0</span>
-      <span class="hints-badge">💡 <b id="hints-left">2</b> hints left</span>
+    <div>
+      <div class="answered-count">Answered: <span id="answered-count">0</span> / <span id="total-count">0</span></div>
+      <div class="dopamine-remaining" id="dopamine-remaining"></div>
     </div>
     <button class="btn-submit" id="btn-submit">
       Submit Quiz <i data-lucide="send"></i>
@@ -313,14 +830,102 @@
   </div>
 </div>
 
-<!-- Toast -->
-<div id="toast">
-  <span id="toast-emoji">🎉</span>
-  <span id="toast-msg">Almost there!</span>
+<!-- ── SCREEN 4: RESULTS ── -->
+<div class="screen" id="screen-results">
+  <div class="results-inner">
+
+    <div class="letter-envelope">
+      <div class="envelope-flap"></div>
+      <div class="envelope-body"><i data-lucide="mail-open"></i></div>
+    </div>
+
+    <div class="results-admit-tag">
+      <i data-lucide="star"></i> Your CourseReady Assessment Result
+    </div>
+
+    <div class="results-score-wrap">
+      <div class="big-ring" id="big-ring">
+        <div class="big-ring-inner">
+          <div class="big-ring-pct" id="result-pct">0%</div>
+          <div class="big-ring-label" id="result-score-label">0 / 0</div>
+        </div>
+      </div>
+      <div class="results-verdict" id="results-verdict">—</div>
+      <div class="results-sub" id="results-sub">—</div>
+    </div>
+
+    <!-- Archetype result -->
+    <div class="archetype-result" id="archetype-result-card">
+      <div class="archetype-result-label"><i data-lucide="sparkles"></i> Your Archetype</div>
+      <div class="archetype-title" id="archetype-title">—</div>
+      <div class="archetype-desc" id="archetype-desc">—</div>
+    </div>
+
+    <!-- Inspiration person -->
+    <div class="inspiration-card" id="inspiration-card">
+      <div class="inspiration-header">
+        <div class="inspiration-icon"><i data-lucide="user-check"></i></div>
+        <div class="inspiration-meta">
+          <div class="label">Inspired by</div>
+          <div class="name" id="inspiration-name">—</div>
+        </div>
+      </div>
+      <div class="inspiration-quote" id="inspiration-quote">—</div>
+      <div class="inspiration-career" id="inspiration-career">—</div>
+    </div>
+
+    <!-- Dream Board -->
+    <div class="dream-board" id="dream-board">
+      <h4><i data-lucide="compass"></i> Your Dream Board</h4>
+      <div class="dream-grid" id="dream-grid"></div>
+    </div>
+
+    <!-- AI Feedback -->
+    <div class="motivation-card">
+      <div class="motivation-header">
+        <i data-lucide="message-circle"></i>
+        <span>AI Feedback</span>
+      </div>
+      <div class="motivation-text" id="motivation-text">
+        <span class="motivation-cursor"></span>
+      </div>
+    </div>
+
+    <!-- Wrong answers review -->
+    <div class="wrong-review" id="wrong-review">
+      <h4><i data-lucide="book-marked"></i> Learn From These</h4>
+      <div id="wrong-items-list"></div>
+    </div>
+
+    <!-- Topic breakdown -->
+    <div class="breakdown">
+      <h4><i data-lucide="bar-chart-2"></i> Topic Breakdown</h4>
+      <div class="breakdown-list" id="breakdown-list"></div>
+    </div>
+
+    <!-- Share card -->
+    <div class="share-card">
+      <div class="share-label"><i data-lucide="share-2"></i> Share Your Result</div>
+      <div class="share-tagline">You're a <strong id="share-archetype-inline">Future Graduate</strong> — let the world know!</div>
+      <button class="btn-share" id="btn-share">
+        <i data-lucide="copy"></i> Copy Share Card
+      </button>
+    </div>
+
+    <div class="results-actions">
+      <button class="btn-primary" onclick="retakeQuiz()">
+        <i data-lucide="refresh-cw"></i> Retake Quiz
+      </button>
+      <a href="dashboard.html" class="btn-outline">
+        <i data-lucide="layout-dashboard"></i> Dashboard
+      </a>
+    </div>
+  </div>
 </div>
 
 <script>
-// ── COURSES ──
+// ── DATA ──────────────────────────────────────────────────────────────────────
+
 const COURSES = [
   "BS Nursing","BS Information Technology","BS Accountancy","BS Psychology",
   "BS Education","BS Architecture","BS Civil Engineering","BS Computer Science",
@@ -338,135 +943,142 @@ const COURSES = [
   "AB Sociology","AB Anthropology","BS Public Health","BS Midwifery",
 ];
 
-// ── COURSE INSPIRATIONS ──
-const INSPIRATIONS = {
-  "BS Nursing":               { name:"Fe del Mundo", role:"1st Asian admitted to Harvard Medical School", achievement:"Founded the Children's Medical Center of the Philippines and dedicated her life to pediatric care — all starting from a dream of helping children.", emoji:"👩‍⚕️" },
-  "BS Information Technology":{ name:"Diosdado Banatao", role:"Silicon Valley Pioneer & Chip Designer", achievement:"Born in a farming village in Cagayan, he invented the graphics accelerator chip found in almost every PC on Earth.", emoji:"💻" },
-  "BS Computer Science":      { name:"Diosdado Banatao", role:"Silicon Valley Pioneer & Chip Designer", achievement:"Born in a farming village in Cagayan, he invented the graphics accelerator chip found in almost every PC on Earth.", emoji:"💻" },
-  "BS Computer Engineering":  { name:"Diosdado Banatao", role:"Silicon Valley Pioneer & Chip Designer", achievement:"His work on microchips and network controllers changed how the entire world computes — from the Philippines to the world stage.", emoji:"💾" },
-  "BS Electronics Engineering":{ name:"Diosdado Banatao", role:"Silicon Valley Pioneer", achievement:"Invented foundational computer hardware that powered the modern internet age — a Filipino from Cagayan Valley.", emoji:"📡" },
-  "BS Accountancy":           { name:"Margarito Teves", role:"Former Secretary of Finance, Philippines", achievement:"From accounting student to managing the entire Philippine national economy. Every peso of knowledge you gain today matters.", emoji:"📊" },
-  "BS Psychology":            { name:"Natividad Dayan", role:"Pioneer of Filipino Psychology", achievement:"Established psychology as a respected science in the Philippines and showed that understanding the human mind is the most powerful tool we have.", emoji:"🧠" },
-  "BS Education":             { name:"Jose Rizal", role:"National Hero & Lifelong Educator", achievement:"Before becoming the Philippines' greatest hero, Rizal believed education was the only true path to freedom. He started where you are.", emoji:"📖" },
-  "BS Architecture":          { name:"Carlos Arguelles", role:"National Artist for Architecture", achievement:"Designed iconic structures that shaped the Philippine skyline and proved Filipino creativity belongs on the world stage.", emoji:"🏛️" },
-  "BS Civil Engineering":     { name:"Guillermo Tolentino", role:"Engineer & National Artist", achievement:"Built structures and monuments that have endured generations — Filipino engineers have shaped every road, bridge, and building in this country.", emoji:"🏗️" },
-  "BS Business Administration":{ name:"Henry Sy", role:"Founder of SM Group of Companies", achievement:"Started selling shoes from a tiny stall in Manila. Through relentless business strategy, he built the largest retail empire in the Philippines.", emoji:"💼" },
-  "AB Communication":         { name:"Nora Aunor", role:"The Superstar — Icon of Filipino Arts & Culture", achievement:"From a water vendor in Iriga City, she rose to become the most acclaimed actress in Philippine history. A story is the most powerful thing you can own.", emoji:"🎙️" },
-  "BS Criminology":           { name:"Gaudencio Mateo Jr.", role:"Former PNP Chief & Criminologist", achievement:"Rose through the ranks to lead the entire Philippine National Police, proving criminology is a path to real justice and national security.", emoji:"⚖️" },
-  "BS Pharmacy":              { name:"Clara Lim-Sylianco", role:"First Filipino Woman PhD in Chemistry/Pharmacy", achievement:"A trailblazer who proved Filipino women belong at the cutting edge of pharmaceutical science — she changed how we study drug safety.", emoji:"💊" },
-  "BS Physical Therapy":      { name:"Filipino PT Community", role:"Among the World's Most Sought-After Therapists", achievement:"Filipino physical therapists are deployed globally and trusted for their skills and compassionate care. The world literally heals better with Filipinos.", emoji:"🤸" },
-  "BS Nutrition & Dietetics": { name:"Florentino Garces", role:"Nutrition Pioneer", achievement:"Fought hunger and malnutrition in the Philippines and shaped programs that changed the eating habits of millions of Filipinos.", emoji:"🥗" },
-  "BS Hotel & Restaurant Management":{ name:"Tony Tan Caktiong", role:"Founder of Jollibee Foods Corporation", achievement:"Started with a small ice cream parlor in Cubao. Today Jollibee is a global brand in 34 countries — built on Filipino heart and hospitality.", emoji:"🍽️" },
-  "BS Tourism Management":    { name:"Maria Helena Real", role:"Pioneer of Philippine Sustainable Tourism", achievement:"Fought to protect the Philippines' natural wonders while building one of Asia's most celebrated tourism industries.", emoji:"✈️" },
-  "BS Social Work":           { name:"Josefa Llanes Escoda", role:"Social Worker & National Hero", achievement:"Dedicated her life to empowering Filipino women and the poor. She proved social work is not a job — it is a calling that changes history.", emoji:"🤝" },
-  "BS Biology":               { name:"Edgardo Gomez", role:"Father of Philippine Marine Biology", achievement:"Led groundbreaking coral reef research establishing the Philippines as a global center of marine biodiversity study.", emoji:"🔬" },
-  "BS Medical Technology":    { name:"Araceli Maningat", role:"World-Renowned Food Scientist", achievement:"Filipino medical technologists and scientists are trusted in hospitals worldwide — from Manila to New York to Dubai.", emoji:"🧪" },
-  "AB Political Science":     { name:"Benigno Aquino Jr.", role:"Senator & Democracy Icon", achievement:"Used political science education to fight for democracy and freedom. His courage helped give the Philippines back to its people.", emoji:"🏛️" },
-  "BS Electrical Engineering":{ name:"Gregorio Zara", role:"Inventor of the World's First Video Phone", achievement:"A Filipino electrical engineer invented two-way video telephony decades before Zoom was imaginable — from the Philippines to world history.", emoji:"⚡" },
-  "BS Mechanical Engineering":{ name:"Ernesto Pineda", role:"ME Pioneer & National Educator", achievement:"Filipino mechanical engineers have designed everything from iconic jeepneys to aerospace components — engineering excellence is in Filipino DNA.", emoji:"⚙️" },
-  "BS Chemical Engineering":  { name:"Clara Lim-Sylianco", role:"First Filipino PhD in Chemistry", achievement:"Broke barriers as a woman in science and became the leading researcher in pharmaceutical chemistry in the country.", emoji:"⚗️" },
-  "BS Mathematics":           { name:"Raymundo Favila", role:"First Filipino PhD in Mathematics", achievement:"Pioneered mathematics education in the Philippines. Every equation you solve today stands on foundations he helped build.", emoji:"📐" },
-  "BS Statistics":            { name:"Augusto Espiritu", role:"Founder of Philippine Statistical Systems", achievement:"Built the data infrastructure that counts and understands every Filipino. Statistics shapes policy, economy, and millions of lives.", emoji:"📈" },
-  "BS Chemistry":             { name:"Clara Lim-Sylianco", role:"First Filipino Woman PhD in Chemistry", achievement:"Trailblazing scientist who proved Filipino women belong at the cutting edge of science — and left a legacy that still teaches students today.", emoji:"🧫" },
-  "BS Physics":               { name:"Josefino Comiso", role:"NASA Climate Scientist", achievement:"A Filipino physicist who worked at NASA studying polar ice — from the Philippines all the way to outer space.", emoji:"🌌" },
-  "BS Environmental Science": { name:"Edgardo Gomez", role:"Marine Biologist & Environmental Advocate", achievement:"Protected millions of hectares of Philippine coral reefs and trained generations of environmental scientists to guard our natural heritage.", emoji:"🌿" },
-  "BS Marine Biology":        { name:"Edgardo Gomez", role:"Father of Philippine Marine Biology", achievement:"His coral reef research placed the Philippines on the global scientific map — the world's marine scientists look to this country for answers.", emoji:"🐠" },
-  "BS Dentistry":             { name:"Francisco Duque I", role:"Pioneer of Philippine Dentistry", achievement:"Among the first Filipino dentists to establish dental education in the country — giving millions of Filipinos access to proper oral healthcare.", emoji:"🦷" },
-  "BS Radiologic Technology": { name:"Filipino Rad Tech Heroes", role:"Trusted in Hospitals on 6 Continents", achievement:"Filipino radiologic technologists are among the most deployed healthcare workers globally. Their precision and care saves lives every single day.", emoji:"🩻" },
-  "BS Occupational Therapy":  { name:"Filipino OT Community", role:"Global Healers", achievement:"Filipino OTs are recognized worldwide for exceptional skill and heart. Graduates from the Philippines work in hospitals on every continent.", emoji:"🙌" },
-  "BS Public Health":         { name:"Alberto Romualdez Jr.", role:"Former Secretary of Health", achievement:"Shaped Philippine public health policy and fought for universal healthcare — proving that public health professionals change millions of lives at once.", emoji:"🏥" },
-  "BS Midwifery":             { name:"Filipino Midwives", role:"Frontliners of Life Itself", achievement:"Filipino midwives deliver thousands of babies every day in communities where hospitals cannot reach. They are literally at the beginning of every Filipino life.", emoji:"👶" },
-  "BS Fine Arts":             { name:"Fernando Amorsolo", role:"First National Artist of the Philippines", achievement:"Painted the soul of the Filipino people. He showed that art is not decoration — it is history, identity, and the light of a nation.", emoji:"🎨" },
-  "BS Interior Design":       { name:"Lor Calma", role:"Award-Winning Filipino Interior Designer", achievement:"Represents Filipino design on the world stage. Philippine designers bring warmth, craft, and cultural storytelling to every space they touch.", emoji:"🏠" },
-  "BS Food Technology":       { name:"Araceli Maningat", role:"World Authority on Starch Technology", achievement:"A Filipino food scientist whose research is cited globally. She proved that food technology from the Philippines can feed and nourish the world.", emoji:"🌽" },
-  "BS Forestry":              { name:"Juan Alvarez", role:"Philippine Forestry Pioneer", achievement:"Filipino foresters protect some of the most biodiverse and threatened rainforests on Earth — the lungs of Southeast Asia.", emoji:"🌳" },
-  "BS Agricultural Science":  { name:"Rolando Dy", role:"Agricultural Economist & Reformer", achievement:"Worked to transform Philippine agriculture to feed millions. Every agri-science graduate carries the future of Filipino food security.", emoji:"🌾" },
-  "BS Agricultural Engineering":{ name:"IRRI Filipino Engineers", role:"Backbone of Global Food Security", achievement:"Filipino agricultural engineers designed irrigation systems that feed hundreds of millions of people across Asia.", emoji:"🚜" },
-  "BS Geology":               { name:"Raymundo Punongbayan", role:"Volcanologist who saved thousands of lives", achievement:"Led the team that correctly predicted the Mt. Pinatubo eruption in 1991, allowing evacuation that saved over 5,000 lives through pure science.", emoji:"🌋" },
-  "BS Mining Engineering":    { name:"Felipe Sotto", role:"Mining Engineering Pioneer", achievement:"Filipino mining engineers have built careers extracting the resources that powered the Philippine economy — now leading sustainable mining globally.", emoji:"⛏️" },
-  "BS Geodetic Engineering":  { name:"NAMRIA Engineers", role:"The Mapmakers of the Philippines", achievement:"Filipino geodetic engineers mapped every island, mountain, and river in the archipelago. Without them, the Philippines literally doesn't exist on the map.", emoji:"🗺️" },
-  "BS Industrial Engineering":{ name:"Josefino Comiso", role:"Systems Thinker & Engineer", achievement:"Industrial engineers optimize the systems that power hospitals, factories, and supply chains — they make everything in society work better.", emoji:"🏭" },
-  "AB English":               { name:"Nick Joaquin", role:"National Artist for Literature", achievement:"One of the greatest English-language writers in all of Asia — born in Paco, Manila. He proved the Filipino voice in English is among the world's finest.", emoji:"✍️" },
-  "AB Philosophy":            { name:"Roque Ferriols, SJ", role:"Father of Filipino Philosophy", achievement:"Taught philosophy in Filipino for the first time, proving the deepest questions of existence must be asked in our own language.", emoji:"💭" },
-  "AB Sociology":             { name:"Randy David", role:"Sociologist & Public Intellectual", achievement:"Used sociology to help the Philippines understand itself — through journalism, teaching, and public discourse that reached millions.", emoji:"👥" },
-  "AB Anthropology":          { name:"H. Otley Beyer", role:"Father of Philippine Anthropology", achievement:"Dedicated his life to documenting Filipino culture, languages, and history — building the foundation of Philippine national identity.", emoji:"🏺" },
+const CAMPUS_BUILDINGS = [
+  { icon: 'door-open',    name: 'Gate' },
+  { icon: 'library',      name: 'Library' },
+  { icon: 'flask-conical',name: 'Lab' },
+  { icon: 'home',         name: 'Dorm' },
+  { icon: 'utensils',     name: 'Canteen' },
+  { icon: 'dumbbell',     name: 'Gym' },
+  { icon: 'music',        name: 'Arts Hall' },
+  { icon: 'trophy',       name: "Rector's" },
+];
+
+const ARCHETYPES = {
+  high:   { icon:'microscope', title:'The Future Researcher', desc:'You think in systems and love understanding the "why" behind everything. You\'re exactly the kind of mind that will push boundaries in your field.' },
+  mid:    { icon:'briefcase',  title:'The Born Entrepreneur', desc:'You\'re resourceful and driven. You might not have all the answers yet, but you know how to find them — and that\'s what makes great professionals.' },
+  low:    { icon:'palette',    title:'The Creative Disruptor', desc:'You see things differently. Your unique perspective is your superpower. The best innovators didn\'t start by knowing everything — they started by asking better questions.' },
+  lowest: { icon:'heart-handshake', title:'The Compassionate Learner', desc:'Your journey is just beginning. Every expert was once exactly where you are. Your openness to learn is the single most important trait you can have right now.' },
 };
 
-function getInspo(course) {
-  return INSPIRATIONS[course] || { name:"Filipino Professionals", role:"World-Class Graduates", achievement:"Filipino graduates in this field are recognized globally for their excellence, dedication, and the unique heart they bring to every profession.", emoji:"🎓" };
+// Inspirational Filipinos / global icons per course
+const INSPIRATIONS = {
+  "BS Nursing": { name: "Maria Ylagan Orosa", career: "Pioneering Filipino Chemist & Nutrition Advocate", quote: "She didn't wait for perfect conditions. She worked with what she had and changed lives — exactly what nurses do every day." },
+  "BS Information Technology": { name: "Diosdado Banatao", career: "Filipino Silicon Valley Pioneer & Tech Entrepreneur", quote: "Born in a nipa hut in Cagayan, he went on to invent chips used in billions of computers worldwide. Your IT degree is your first line of code toward that legacy." },
+  "BS Accountancy": { name: "Cezar Consing", career: "Former President & CEO, Bank of the Philippine Islands", quote: "Numbers are the language of trust. Master them, and you master the foundation every business rests on." },
+  "BS Psychology": { name: "Rogelia Pe-Pua", career: "Pioneer in Filipino Psychology (Sikolohiyang Pilipino)", quote: "She redefined what it means to study the human mind through a Filipino lens. Your journey in Psychology could be just as transformative." },
+  "BS Computer Science": { name: "Diosdado Banatao", career: "Filipino Silicon Valley Pioneer", quote: "From Cagayan to Silicon Valley — a Filipino-made chip powered the internet age. Your CS degree is the start of something just as historic." },
+  "BS Architecture": { name: "Juan Nakpil", career: "National Artist for Architecture", quote: "He shaped the skyline of a nation. Every building you design is a statement about who we are and who we're becoming." },
+  "BS Civil Engineering": { name: "Edilberto Parulan", career: "Renowned Filipino Structural Engineer", quote: "The bridges we build outlive us. Every calculation you perfect today carries the weight of the lives crossing tomorrow." },
+  "BS Business Administration": { name: "Tony Tan Caktiong", career: "Founder of Jollibee Foods Corporation", quote: "He started with ice cream in Cubao. Today, Jollibee is a global brand with thousands of stores. Your business degree is your first franchise." },
+  "AB Communication": { name: "Vergel Santos", career: "Award-winning Filipino Journalist & Media Advocate", quote: "Words shaped into truth are the most powerful force in democracy. Learn to wield them well." },
+  "BS Criminology": { name: "General Oscar Calderon", career: "Former PNP Chief & Law Enforcement Leader", quote: "Justice isn't blind — it needs clear eyes, sharp minds, and courageous hearts. That's what Criminology builds." },
+};
+
+// Career dream data per course
+const DREAM_DATA = {
+  "BS Nursing": { careers: "ICU Nurse, Travel Nurse, Nurse Educator", salary: "₱25k–₱80k+/month", setting: "Hospitals, clinics, global opportunities", timeline: "Licensure exam → First job in 6 months" },
+  "BS Information Technology": { careers: "Software Dev, Cloud Architect, Cybersecurity", salary: "₱30k–₱150k+/month", setting: "Startups, MNCs, remote-first companies", timeline: "Internship → First role within 3 months of graduation" },
+  "BS Accountancy": { careers: "CPA, Financial Analyst, Auditor", salary: "₱25k–₱120k+/month", setting: "Big 4 firms, banks, government", timeline: "CPA board exam → Instant career boost" },
+  "BS Computer Science": { careers: "AI Engineer, Full-Stack Dev, Data Scientist", salary: "₱35k–₱200k+/month", setting: "Tech giants, startups, freelance", timeline: "Portfolio + internship → High-demand market" },
+  "BS Business Administration": { careers: "Manager, Entrepreneur, Management Consultant", salary: "₱22k–₱150k+/month", setting: "Corporations, SMEs, your own business", timeline: "MBA optional → Fast track to leadership" },
+  "BS Psychology": { careers: "Psychologist, HR Manager, Counselor", salary: "₱20k–₱90k+/month", setting: "Clinics, schools, corporations", timeline: "Licensure → Growing demand in mental health" },
+};
+
+const DEFAULT_DREAM = { careers: "Various professional roles in your field", salary: "Competitive salary based on specialization", setting: "Public and private sector opportunities", timeline: "Board exam or licensure → Entry-level role" };
+
+// ── STATE ─────────────────────────────────────────────────────────────────────
+let selectedCourse = null;
+let numQuestions = 10;
+let questions = [];
+let userAnswers = {};
+let hintsUsed = 0;
+let MAX_HINTS = 2;
+let streakCount = 0;
+let lastAnsweredCorrectly = false; // tracked post-submit; for quiz we just track consecutive answers
+let answeredStreak = 0;
+
+// ── DAYS TO COLLEGE ────────────────────────────────────────────────────────────
+function computeDaysToCollege() {
+  const now = new Date();
+  const augustFirst = new Date(now.getFullYear(), 7, 1); // August 1
+  if (now > augustFirst) augustFirst.setFullYear(now.getFullYear() + 1);
+  const diff = Math.ceil((augustFirst - now) / (1000 * 60 * 60 * 24));
+  document.getElementById('college-days').textContent = diff;
 }
+computeDaysToCollege();
 
-// ── STATE ──
-let selectedCourse = null, numQuestions = 10, questions = [], userAnswers = {}, hintsUsed = 0;
-const MAX_HINTS = 2;
-
-// ── STARS ──
-(function(){
-  const c = document.getElementById('intro-stars');
-  for (let i = 0; i < 70; i++) {
-    const s = document.createElement('div'); s.className = 'star';
-    s.style.cssText = `left:${Math.random()*100}%;top:${Math.random()*100}%;--d:${2+Math.random()*4}s;--delay:${Math.random()*5}s;width:${1+Math.random()*2}px;height:${1+Math.random()*2}px;`;
-    c.appendChild(s);
-  }
-})();
-
-// ── UTILS ──
+// ── SCREEN MANAGEMENT ──────────────────────────────────────────────────────────
 function showScreen(id) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   document.getElementById(id).classList.add('active');
-  window.scrollTo({ top:0, behavior:'smooth' });
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+
+  const mapEl = document.getElementById('campus-map');
+  mapEl.classList.toggle('visible', id === 'screen-quiz');
 }
 
-let toastTimer;
-function showToast(emoji, msg, dur = 3500) {
-  clearTimeout(toastTimer);
-  document.getElementById('toast-emoji').textContent = emoji;
-  document.getElementById('toast-msg').textContent = msg;
-  const t = document.getElementById('toast');
-  t.classList.add('show');
-  toastTimer = setTimeout(() => t.classList.remove('show'), dur);
+// ── CAMPUS MAP ────────────────────────────────────────────────────────────────
+function buildCampusMap() {
+  const container = document.getElementById('campus-buildings');
+  container.innerHTML = CAMPUS_BUILDINGS.map((b, i) => `
+    <div class="campus-building" id="building-${i}">
+      <div class="campus-icon-wrap" id="bicon-${i}">
+        <i data-lucide="${b.icon}"></i>
+      </div>
+      <div class="campus-name" id="bname-${i}">${b.name}</div>
+    </div>
+    ${i < CAMPUS_BUILDINGS.length - 1 ? `<div class="campus-progress-track"><div class="campus-progress-fill" id="track-${i}"></div></div>` : ''}
+  `).join('');
+  lucide.createIcons();
 }
 
-// ── CAMPUS MAP ──
-function updateCampusMap() {
-  const total = questions.length, answered = Object.keys(userAnswers).length;
-  if (!total) return;
-  const pct = answered / total;
-  for (let i = 0; i < 5; i++) {
-    const threshold = i * 0.25;
-    document.getElementById(`cb-${i}`)?.classList.toggle('unlocked', pct >= threshold || i === 0);
-    if (i < 4) document.getElementById(`cc-${i}`)?.classList.toggle('active', pct >= (i+1)*0.25);
+function updateCampusMap(answeredCount, totalCount) {
+  const totalBuildings = CAMPUS_BUILDINGS.length;
+  const unlockEvery = Math.max(1, Math.ceil(totalCount / totalBuildings));
+  const unlockedCount = Math.min(totalBuildings, Math.floor(answeredCount / unlockEvery) + (answeredCount > 0 ? 1 : 0));
+
+  for (let i = 0; i < totalBuildings; i++) {
+    const iconWrap = document.getElementById(`bicon-${i}`);
+    const nameEl = document.getElementById(`bname-${i}`);
+    if (!iconWrap) continue;
+    if (i < unlockedCount) {
+      iconWrap.classList.add('unlocked');
+      nameEl && nameEl.classList.add('unlocked');
+    } else {
+      iconWrap.classList.remove('unlocked');
+      nameEl && nameEl.classList.remove('unlocked');
+    }
+    // Animate track
+    if (i < totalBuildings - 1) {
+      const track = document.getElementById(`track-${i}`);
+      if (track) {
+        const pct = i < unlockedCount - 1 ? 100 : (i === unlockedCount - 1 ? 50 : 0);
+        track.style.width = pct + '%';
+      }
+    }
   }
-  const remaining = total - answered;
-  const el = document.getElementById('campus-progress-text');
-  if (!remaining) el.textContent = '🏆 Campus fully unlocked! Submit when ready.';
-  else if (remaining <= 2) el.textContent = `🔥 Only ${remaining} more to unlock the Main Hall!`;
-  else el.textContent = `${answered}/${total} answered — keep going!`;
+  document.getElementById('campus-progress-text').textContent = `${unlockedCount} / ${totalBuildings} buildings unlocked`;
 }
 
-// ── COURSE PICKER ──
+buildCampusMap();
+
+// ── COURSE PICKER ─────────────────────────────────────────────────────────────
 function renderCourses(filter = '') {
+  const grid = document.getElementById('course-grid');
   const filtered = COURSES.filter(c => c.toLowerCase().includes(filter.toLowerCase()));
-  document.getElementById('course-grid').innerHTML = filtered.length
-    ? filtered.map(c => `<button class="course-chip${selectedCourse===c?' selected':''}" onclick="selectCourse('${c.replace(/'/g,"\\'")}')"> ${c}</button>`).join('')
-    : '<div class="no-results">No courses found.</div>';
+  if (!filtered.length) { grid.innerHTML = '<div class="no-results">No courses found. Try a different search.</div>'; return; }
+  grid.innerHTML = filtered.map(c => `
+    <button class="course-chip ${selectedCourse === c ? 'selected' : ''}" onclick="selectCourse('${c.replace(/'/g,"\\'")}')">
+      ${c}
+    </button>
+  `).join('');
 }
 
 function selectCourse(course) {
   selectedCourse = course;
   document.getElementById('selected-course-name').textContent = course;
   document.getElementById('pick-controls').classList.add('visible');
-  const inspo = getInspo(course);
-  document.getElementById('inspo-wrap').innerHTML = `
-    <div class="inspo-card">
-      <div class="inspo-emoji">${inspo.emoji}</div>
-      <div>
-        <div class="inspo-name">${inspo.name}</div>
-        <div class="inspo-role">${inspo.role}</div>
-        <div class="inspo-achievement">${inspo.achievement}</div>
-        <div class="inspo-footer">They started exactly where you are now. 🌟</div>
-      </div>
-    </div>`;
   renderCourses(document.getElementById('course-search').value);
   lucide.createIcons();
 }
@@ -476,8 +1088,13 @@ document.getElementById('qcount-slider').addEventListener('input', e => {
   numQuestions = parseInt(e.target.value);
   document.getElementById('qcount-display').textContent = numQuestions;
 });
+document.getElementById('btn-begin').addEventListener('click', () => {
+  showScreen('screen-pick');
+  renderCourses();
+  lucide.createIcons();
+});
 
-// ── GENERATE QUIZ ──
+// ── GENERATE QUIZ ─────────────────────────────────────────────────────────────
 document.getElementById('btn-start').addEventListener('click', async () => {
   if (!selectedCourse) return;
   showScreen('screen-gen');
@@ -487,203 +1104,408 @@ document.getElementById('btn-start').addEventListener('click', async () => {
 });
 
 async function generateQuiz() {
-  const streamEl = document.getElementById('gen-stream-text');
-  const fillEl = document.getElementById('gen-progress-fill');
-  const labelEl = document.getElementById('gen-progress-label');
+  const streamText = document.getElementById('gen-stream-text');
+  const progressFill = document.getElementById('gen-progress-fill');
+  const progressLabel = document.getElementById('gen-progress-label');
   let rawText = '';
-  streamEl.textContent = '';
-
-  const easyEnd = Math.ceil(numQuestions * 0.33);
-  const medEnd  = Math.ceil(numQuestions * 0.67);
-
-  // NOTE FOR BACKEND: pass userPrompt to override default AI prompt
-  const userPrompt = `Generate exactly ${numQuestions} multiple choice questions to assess readiness for ${selectedCourse} in the Philippines.
-
-DIFFICULTY RULES (strictly follow this order):
-- Questions 1 to ${easyEnd}: EASY — basic recall, everyday language, no jargon, recognition-level
-- Questions ${easyEnd+1} to ${medEnd}: MEDIUM — applied understanding, course-relevant reasoning
-- Questions ${medEnd+1} to ${numQuestions}: NORMAL — analytical thinking, real-world course application
-
-WRITING RULES:
-- Use plain, clear, conversational English — difficulty comes from content knowledge, NOT confusing wording
-- Include a hint that helps without giving away the answer
-- Include a brief explanation of why the correct answer is correct (1-2 sentences)
-
-Return ONLY a valid JSON array. No markdown, no extra text:
-[{"q":"Question?","choices":["A) ...","B) ...","C) ...","D) ..."],"answer":"A","subject":"Topic","difficulty":"easy","hint":"Helpful clue without spoiling","explanation":"Why A is the correct answer."}]`;
+  streamText.textContent = '';
 
   try {
     const res = await fetch('/api/quiz', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ course: selectedCourse, numQuestions, userPrompt }),
+      body: JSON.stringify({ course: selectedCourse, numQuestions }),
     });
-    if (!res.ok) throw new Error((await res.json()).error || 'Server error');
+
+    if (!res.ok) { const err = await res.json(); throw new Error(err.error || 'Server error'); }
 
     const reader = res.body.getReader();
-    const dec = new TextDecoder();
-    let buf = '';
+    const decoder = new TextDecoder();
+    let buffer = '';
+
     while (true) {
       const { done, value } = await reader.read();
       if (done) break;
-      buf += dec.decode(value, { stream:true });
-      const lines = buf.split('\n'); buf = lines.pop();
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split('\n');
+      buffer = lines.pop();
       for (const line of lines) {
         if (!line.startsWith('data: ')) continue;
         const data = line.slice(6).trim();
         if (data === '[DONE]') continue;
         try {
-          const tok = JSON.parse(data).choices?.[0]?.delta?.content || '';
-          if (tok) {
-            rawText += tok;
-            streamEl.textContent = rawText.slice(-300);
-            const qCount = (rawText.match(/"q":/g)||[]).length;
-            const pct = Math.min(Math.round((qCount/numQuestions)*100), 95);
-            fillEl.style.width = pct + '%';
-            labelEl.textContent = qCount > 0 ? `Writing question ${qCount} of ${numQuestions}…` : 'AI is thinking…';
+          const parsed = JSON.parse(data);
+          const token = parsed.choices?.[0]?.delta?.content || '';
+          if (token) {
+            rawText += token;
+            streamText.textContent = rawText.slice(-300);
+            const questionCount = (rawText.match(/"q":/g) || []).length;
+            const pct = Math.min(Math.round((questionCount / numQuestions) * 100), 95);
+            progressFill.style.width = pct + '%';
+            progressLabel.textContent = questionCount > 0 ? `Writing question ${questionCount} of ${numQuestions}…` : 'AI is thinking…';
           }
         } catch { /* partial chunk */ }
       }
     }
 
-    fillEl.style.width = '100%';
-    labelEl.textContent = 'Done! Loading your quiz…';
-    const match = rawText.match(/\[[\s\S]*\]/);
-    if (!match) throw new Error('Unexpected format. Please try again.');
-    questions = JSON.parse(match[0]);
+    progressFill.style.width = '100%';
+    progressLabel.textContent = 'Done! Loading your quiz…';
+    const jsonMatch = rawText.match(/\[[\s\S]*\]/);
+    if (!jsonMatch) throw new Error('AI returned unexpected format. Please try again.');
+    questions = JSON.parse(jsonMatch[0]);
     if (!Array.isArray(questions) || !questions.length) throw new Error('No questions generated.');
-    setTimeout(renderQuiz, 600);
+    setTimeout(() => renderQuiz(), 600);
 
   } catch (err) {
-    streamEl.textContent = `Error: ${err.message}`;
-    labelEl.textContent = 'Something went wrong.';
+    streamText.textContent = `Error: ${err.message}`;
+    progressLabel.textContent = 'Something went wrong.';
     setTimeout(() => {
       const btn = document.createElement('button');
       btn.textContent = 'Try Again';
       btn.style.cssText = 'margin-top:16px;background:var(--gold);color:var(--navy);border:none;padding:10px 24px;border-radius:10px;font-weight:700;cursor:pointer;font-family:DM Sans,sans-serif;';
       btn.onclick = () => showScreen('screen-pick');
       document.querySelector('.gen-inner').appendChild(btn);
-    }, 400);
+    }, 500);
   }
 }
 
-// ── RENDER QUIZ ──
+// ── HINT SYSTEM ───────────────────────────────────────────────────────────────
+function buildHintDisplay() {
+  const container = document.getElementById('hint-tokens-display');
+  let html = '<i data-lucide="lightbulb" style="width:13px;height:13px;color:var(--slate)"></i> Hints: ';
+  for (let i = 0; i < MAX_HINTS; i++) {
+    html += `<div class="hint-token ${i < hintsUsed ? 'used' : ''}" id="hint-global-${i}"><i data-lucide="lightbulb"></i></div>`;
+  }
+  container.innerHTML = html;
+  lucide.createIcons();
+}
+
+function useHintOnQuestion(qIndex) {
+  if (hintsUsed >= MAX_HINTS) return;
+  const hintBox = document.getElementById(`hint-box-${qIndex}`);
+  if (!hintBox || hintBox.classList.contains('show')) return;
+  hintsUsed++;
+  hintBox.classList.add('show');
+  buildHintDisplay();
+}
+
+// ── RENDER QUIZ ───────────────────────────────────────────────────────────────
 function renderQuiz() {
-  userAnswers = {}; hintsUsed = 0;
-  document.getElementById('hints-left').textContent = MAX_HINTS;
-  document.getElementById('questions-list').innerHTML = '';
+  userAnswers = {};
+  hintsUsed = 0;
+  answeredStreak = 0;
+  const list = document.getElementById('questions-list');
+  list.innerHTML = '';
+
   document.getElementById('quiz-course-label').textContent = selectedCourse;
   document.getElementById('quiz-meta').textContent = `${questions.length} questions`;
   document.getElementById('total-count').textContent = questions.length;
   document.getElementById('answered-count').textContent = 0;
+  document.getElementById('streak-count').textContent = 0;
+  updateDopamineRemaining(0);
+
+  buildHintDisplay();
 
   questions.forEach((q, i) => {
-    const diff = q.difficulty || (i < Math.ceil(questions.length*0.33) ? 'easy' : i < Math.ceil(questions.length*0.67) ? 'medium' : 'normal');
-    const diffLabels = { easy:'🟢 Easy', medium:'🟡 Medium', normal:'🔴 Normal', hard:'🔴 Challenging' };
+    const letters = ['A','B','C','D'];
+    const hintText = q.hint || 'Think carefully about the core concept this question is testing.';
     const card = document.createElement('div');
-    card.className = 'q-card'; card.id = `q-card-${i}`;
+    card.className = 'q-card';
+    card.id = `q-card-${i}`;
     card.innerHTML = `
       <div class="q-top">
-        <div class="q-num">${i+1}</div>
-        <div style="flex:1">
-          <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;flex-wrap:wrap;">
-            <div class="q-subject">${q.subject||'General'}</div>
-            <span class="diff-tag ${diff}">${diffLabels[diff]||'🟡 Medium'}</span>
-          </div>
+        <div class="q-num">${i + 1}</div>
+        <div>
+          <div class="q-subject">${q.subject || 'General'}</div>
           <div class="q-text">${q.q}</div>
         </div>
       </div>
-      <div class="q-choices">
-        ${q.choices.map((c,ci) => `<button class="choice-btn" onclick="selectAnswer(${i},${ci},'${['A','B','C','D'][ci]}')">${c}</button>`).join('')}
+      <button class="q-hint-trigger" onclick="useHintOnQuestion(${i})">
+        <i data-lucide="lightbulb"></i> Use a hint
+      </button>
+      <div class="q-hint-box" id="hint-box-${i}">
+        <div class="q-hint-header"><i data-lucide="lightbulb"></i> Hint</div>
+        ${hintText}
       </div>
-      ${q.hint ? `<div class="hint-row"><button class="btn-hint" id="hbtn-${i}" onclick="useHint(${i})"><i data-lucide="lightbulb"></i> Use a Hint</button></div><div class="hint-bubble" id="hbubble-${i}">💡 ${q.hint}</div>` : ''}
+      <div class="q-choices">
+        ${q.choices.map((c, ci) => `
+          <button class="choice-btn" data-q="${i}" data-choice="${ci}" onclick="selectAnswer(${i}, ${ci}, '${letters[ci]}')">
+            <span class="choice-letter">${letters[ci]}</span>
+            ${c}
+          </button>
+        `).join('')}
+      </div>
     `;
-    document.getElementById('questions-list').appendChild(card);
+    list.appendChild(card);
   });
 
-  document.getElementById('cb-0').classList.add('unlocked');
-  updateCampusMap();
   showScreen('screen-quiz');
   lucide.createIcons();
-  questions.forEach((_, i) => setTimeout(() => document.getElementById(`q-card-${i}`)?.classList.add('visible'), i*80));
+
+  questions.forEach((_, i) => {
+    setTimeout(() => {
+      const card = document.getElementById(`q-card-${i}`);
+      if (card) card.classList.add('visible');
+    }, i * 70);
+  });
+
+  updateCampusMap(0, questions.length);
 }
 
-function useHint(idx) {
-  if (hintsUsed >= MAX_HINTS) { showToast('💡','No hints remaining!',2500); return; }
-  const bubble = document.getElementById(`hbubble-${idx}`);
-  const btn = document.getElementById(`hbtn-${idx}`);
-  if (bubble && !bubble.classList.contains('show')) {
-    bubble.classList.add('show');
-    btn.disabled = true;
-    btn.innerHTML = '<i data-lucide="check"></i> Hint revealed'; lucide.createIcons();
-    hintsUsed++;
-    document.getElementById('hints-left').textContent = MAX_HINTS - hintsUsed;
-    if (MAX_HINTS - hintsUsed === 0) showToast('💡','Last hint used — you got this!',3000);
-  }
+function updateDopamineRemaining(answeredCount) {
+  const remaining = questions.length - answeredCount;
+  const el = document.getElementById('dopamine-remaining');
+  if (!el) return;
+  if (answeredCount === 0) { el.textContent = ''; return; }
+  if (remaining === 0) { el.textContent = 'All done! Ready to submit.'; return; }
+  el.textContent = `${remaining} more to go!`;
 }
 
-function selectAnswer(qIdx, choiceIdx, letter) {
-  userAnswers[qIdx] = letter;
-  const card = document.getElementById(`q-card-${qIdx}`);
-  card.querySelectorAll('.choice-btn').forEach((b,i) => b.classList.toggle('selected', i===choiceIdx));
+function selectAnswer(qIndex, choiceIndex, letter) {
+  userAnswers[qIndex] = letter;
+  answeredStreak++;
+  document.getElementById('streak-count').textContent = answeredStreak;
+
+  const card = document.getElementById(`q-card-${qIndex}`);
+  card.querySelectorAll('.choice-btn').forEach((btn, i) => {
+    btn.classList.toggle('selected', i === choiceIndex);
+  });
   card.classList.add('answered');
-  const count = Object.keys(userAnswers).length, total = questions.length;
+
+  const count = Object.keys(userAnswers).length;
   document.getElementById('answered-count').textContent = count;
-  updateCampusMap();
+  updateDopamineRemaining(count);
+  updateCampusMap(count, questions.length);
+
   const submitBtn = document.getElementById('btn-submit');
-  if (count === total) { submitBtn.classList.add('ready'); showToast('🎉','All done! Hit Submit when ready.',4000); }
-  else if (total - count === 2) showToast('🔥','Almost there! Just 2 more!',3000);
-  else if (total - count === 1) showToast('⚡','One last question — finish strong!',3000);
+  if (count === questions.length) submitBtn.classList.add('ready');
 }
 
 document.getElementById('btn-submit').addEventListener('click', () => {
   if (Object.keys(userAnswers).length < questions.length) return;
-  saveAndRedirect();
+  calculateResults();
 });
 
-function saveAndRedirect() {
-  let correct = 0;
-  const topicMap = {};
-  questions.forEach((q, i) => {
-    const subj = q.subject || 'General';
-    if (!topicMap[subj]) topicMap[subj] = { correct:0, total:0 };
-    topicMap[subj].total++;
-    if (userAnswers[i] === q.answer) { correct++; topicMap[subj].correct++; }
-  });
-  const pct = Math.round((correct / questions.length) * 100);
-  const quizData = { course:selectedCourse, questions, userAnswers, correct, total:questions.length, pct, topicMap, inspiration:getInspo(selectedCourse), timestamp:Date.now() };
-  localStorage.setItem('cr_current_quiz', JSON.stringify(quizData));
-
-  // Save to history + update streak/XP
-  const topics = Object.entries(topicMap).map(([s,d]) => ({subject:s,correct:d.correct,total:d.total,pct:Math.round((d.correct/d.total)*100)}));
-  const hist = JSON.parse(localStorage.getItem('cr_quiz_history')||'[]');
-  hist.unshift({id:Date.now(),course:selectedCourse,score:correct,total:questions.length,pct,passed:pct>=50,date:new Date().toISOString(),topics,strengths:topics.filter(t=>t.pct>=70).map(t=>t.subject),weaknesses:topics.filter(t=>t.pct<50).map(t=>t.subject)});
-  localStorage.setItem('cr_quiz_history', JSON.stringify(hist.slice(0,50)));
-
-  try {
-    const match = document.cookie.match(/(?:^|;\s*)cr_user=([^;]+)/);
-    if (match) {
-      const user = JSON.parse(atob(match[1]));
-      user.xp = (user.xp||0) + (correct*10) + (pct>=50?50:0);
-      user.quizzesDone = (user.quizzesDone||0) + 1;
-      const last = user.lastQuizDate ? new Date(user.lastQuizDate) : null;
-      const today = new Date(), yest = new Date(today); yest.setDate(today.getDate()-1);
-      if (!last || last.toDateString()===yest.toDateString()) user.streak=(user.streak||0)+1;
-      else if (last.toDateString()!==today.toDateString()) user.streak=1;
-      user.lastQuizDate = today.toISOString();
-      const badges = user.badges||[];
-      if (!badges.includes('first_quiz')&&user.quizzesDone>=1) badges.push('first_quiz');
-      if (!badges.includes('perfect_score')&&pct===100) badges.push('perfect_score');
-      if (!badges.includes('streak_5')&&user.streak>=5) badges.push('streak_5');
-      user.badges = badges;
-      document.cookie = `cr_user=${btoa(JSON.stringify(user))}; Path=/; SameSite=Lax; Max-Age=${60*60*24*7}`;
-    }
-  } catch(e) {}
-
-  window.location.href = 'quiz-results.html';
+// ── SAVE RESULT ───────────────────────────────────────────────────────────────
+function saveQuizResult(pct, correct, total, course, topicMap) {
+  const topics = Object.entries(topicMap).map(([subject, d]) => ({ subject, correct: d.correct, total: d.total, pct: Math.round((d.correct/d.total)*100) }));
+  const result = { id: Date.now(), course, score: correct, total, pct, passed: pct >= 50, date: new Date().toISOString(), topics };
+  const history = JSON.parse(localStorage.getItem('cr_quiz_history') || '[]');
+  history.unshift(result);
+  localStorage.setItem('cr_quiz_history', JSON.stringify(history.slice(0, 50)));
 }
 
-// ── INIT ──
+// ── CALCULATE RESULTS ─────────────────────────────────────────────────────────
+function calculateResults() {
+  let correct = 0;
+  const topicMap = {};
+  const wrongItems = [];
+
+  questions.forEach((q, i) => {
+    const subject = q.subject || 'General';
+    if (!topicMap[subject]) topicMap[subject] = { correct: 0, total: 0 };
+    topicMap[subject].total++;
+
+    if (userAnswers[i] === q.answer) {
+      correct++;
+      topicMap[subject].correct++;
+    } else {
+      const letters = ['A','B','C','D'];
+      const userLetter = userAnswers[i];
+      const userChoiceText = q.choices[letters.indexOf(userLetter)] || '—';
+      const correctChoiceText = q.choices[letters.indexOf(q.answer)] || '—';
+      wrongItems.push({ q: q.q, userChoice: `${userLetter}: ${userChoiceText}`, correctChoice: `${q.answer}: ${correctChoiceText}`, explanation: q.explanation || `The correct answer is ${q.answer}. ${q.explanation || 'Review this topic to strengthen your understanding.'}` });
+    }
+  });
+
+  const pct = Math.round((correct / questions.length) * 100);
+  const passed = pct >= 50;
+
+  // Ring
+  const ring = document.getElementById('big-ring');
+  const deg = Math.round((pct / 100) * 360);
+  const ringColor = pct >= 75 ? '#4ade80' : pct >= 50 ? '#f5c842' : '#f87171';
+  ring.style.setProperty('--ring-color', ringColor);
+  ring.style.setProperty('--ring-deg', deg + 'deg');
+  document.getElementById('result-pct').textContent = pct + '%';
+  document.getElementById('result-score-label').textContent = `${correct} / ${questions.length}`;
+
+  const verdict = document.getElementById('results-verdict');
+  const sub = document.getElementById('results-sub');
+  if (pct >= 75) {
+    verdict.textContent = 'College Ready!'; verdict.className = 'results-verdict pass';
+    sub.textContent = `You scored ${pct}% — you're well prepared for ${selectedCourse}.`;
+  } else if (pct >= 50) {
+    verdict.textContent = 'Passed!'; verdict.className = 'results-verdict pass';
+    sub.textContent = `You scored ${pct}% — passing mark reached. Keep reviewing!`;
+  } else {
+    verdict.textContent = 'Keep Studying'; verdict.className = 'results-verdict fail';
+    sub.textContent = `You scored ${pct}% — below passing. Don't give up, you've got this!`;
+  }
+
+  // Archetype
+  const archKey = pct >= 75 ? 'high' : pct >= 50 ? 'mid' : pct >= 30 ? 'low' : 'lowest';
+  const arch = ARCHETYPES[archKey];
+  document.getElementById('archetype-title').textContent = arch.title;
+  document.getElementById('archetype-desc').textContent = arch.desc;
+  document.getElementById('share-archetype-inline').textContent = arch.title;
+  const archCard = document.getElementById('archetype-result-card');
+  const archIcon = archCard.querySelector('.archetype-result-label');
+  archIcon.innerHTML = `<i data-lucide="${arch.icon}"></i> Your Archetype`;
+
+  // Inspiration
+  const inspo = INSPIRATIONS[selectedCourse] || { name: "Jose Rizal", career: "National Hero, Doctor, Novelist, Polymath", quote: "The youth is the hope of the future. You are that hope — don't waste it." };
+  document.getElementById('inspiration-name').textContent = inspo.name;
+  document.getElementById('inspiration-quote').textContent = `"${inspo.quote}"`;
+  document.getElementById('inspiration-career').textContent = inspo.career;
+
+  // Dream board
+  const dream = DREAM_DATA[selectedCourse] || DEFAULT_DREAM;
+  document.getElementById('dream-grid').innerHTML = `
+    <div class="dream-item">
+      <div class="dream-item-label"><i data-lucide="briefcase"></i> Careers</div>
+      <div class="dream-item-value">${dream.careers}</div>
+    </div>
+    <div class="dream-item">
+      <div class="dream-item-label"><i data-lucide="banknote"></i> Salary Range</div>
+      <div class="dream-item-value salary">${dream.salary}</div>
+    </div>
+    <div class="dream-item">
+      <div class="dream-item-label"><i data-lucide="map-pin"></i> Work Setting</div>
+      <div class="dream-item-value">${dream.setting}</div>
+    </div>
+    <div class="dream-item">
+      <div class="dream-item-label"><i data-lucide="clock"></i> Timeline</div>
+      <div class="dream-item-value">${dream.timeline}</div>
+    </div>
+  `;
+
+  // Wrong answers review
+  const wrongList = document.getElementById('wrong-items-list');
+  const wrongReview = document.getElementById('wrong-review');
+  if (wrongItems.length === 0) {
+    wrongReview.style.display = 'none';
+  } else {
+    wrongReview.style.display = 'block';
+    wrongList.innerHTML = wrongItems.map(w => `
+      <div class="wrong-item">
+        <div class="wrong-item-q">${w.q}</div>
+        <div class="wrong-item-row">
+          <span class="badge badge-wrong">Your answer</span>
+          <span class="wrong-item-text">${w.userChoice}</span>
+        </div>
+        <div class="wrong-item-row">
+          <span class="badge badge-correct">Correct</span>
+          <span class="wrong-item-text">${w.correctChoice}</span>
+        </div>
+        <div class="wrong-item-explain">
+          <strong>Why?</strong>
+          ${w.explanation}
+        </div>
+      </div>
+    `).join('');
+  }
+
+  // Topic breakdown
+  const breakdownList = document.getElementById('breakdown-list');
+  breakdownList.innerHTML = Object.entries(topicMap).map(([subject, data]) => {
+    const subPct = Math.round((data.correct / data.total) * 100);
+    const barColor = subPct >= 75 ? '#4ade80' : subPct >= 50 ? '#f5c842' : '#f87171';
+    return `
+      <div class="breakdown-row">
+        <div class="breakdown-subject">${subject}</div>
+        <div class="breakdown-bar-wrap">
+          <div class="breakdown-bar-fill" style="width:0%;background:${barColor}" data-pct="${subPct}"></div>
+        </div>
+        <div class="breakdown-pct" style="color:${barColor}">${subPct}%</div>
+      </div>
+    `;
+  }).join('');
+
+  showScreen('screen-results');
+  document.getElementById('campus-map').classList.remove('visible');
+  lucide.createIcons();
+
+  setTimeout(() => {
+    document.querySelectorAll('.breakdown-bar-fill').forEach(bar => { bar.style.width = bar.dataset.pct + '%'; });
+  }, 400);
+
+  saveQuizResult(pct, correct, questions.length, selectedCourse, topicMap);
+  streamMotivation(pct, correct, questions.length, selectedCourse, topicMap);
+}
+
+// ── STREAM MOTIVATION ─────────────────────────────────────────────────────────
+async function streamMotivation(pct, correct, total, course, topicMap) {
+  const weakTopics = Object.entries(topicMap).filter(([,d]) => (d.correct/d.total) < 0.5).map(([s]) => s).join(', ') || 'none';
+  const strongTopics = Object.entries(topicMap).filter(([,d]) => (d.correct/d.total) >= 0.75).map(([s]) => s).join(', ') || 'none';
+  const tier = pct >= 85 ? 'exceptional' : pct >= 75 ? 'great' : pct >= 50 ? 'passing' : pct >= 30 ? 'low' : 'very_low';
+  const promptMap = {
+    exceptional: `Student got ${pct}% (${correct}/${total}) on ${course} readiness quiz. Strong: ${strongTopics}. Write 3-4 wildly enthusiastic sentences. Name a real legendary figure in ${course} and compare them to this student. Be poetic and playful.`,
+    great: `Student got ${pct}% on ${course} quiz. Strong: ${strongTopics}. Weak: ${weakTopics}. Write 3-4 warm, encouraging sentences. Say they have the makings of a great professional. Be forward-looking and course-specific.`,
+    passing: `Student got ${pct}% on ${course} quiz. They passed. Weak: ${weakTopics}. Write 3-4 honest but upbeat sentences. Acknowledge the pass, mention what to review.`,
+    low: `Student got ${pct}% on ${course} quiz. Didn't pass. Weak: ${weakTopics}. Write 3-4 deeply warm sentences. Say every great ${course} professional started somewhere. Make them want to try again.`,
+    very_low: `Student got ${pct}% on ${course} quiz — very low. Write 3-4 human, gently funny, kind sentences. Be honest with warmth and humor. End with a fire-level hype line.`,
+  };
+
+  const motivationEl = document.getElementById('motivation-text');
+  motivationEl.innerHTML = '<span class="motivation-cursor"></span>';
+  let motivationText = '';
+
+  try {
+    const res = await fetch('/api/quiz', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ motivation: true, prompt: promptMap[tier] }),
+    });
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = '';
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split('\n');
+      buffer = lines.pop();
+      for (const line of lines) {
+        if (!line.startsWith('data: ')) continue;
+        const data = line.slice(6).trim();
+        if (data === '[DONE]') continue;
+        try {
+          const parsed = JSON.parse(data);
+          const token = parsed.choices?.[0]?.delta?.content || '';
+          if (token) { motivationText += token; motivationEl.innerHTML = motivationText + '<span class="motivation-cursor"></span>'; }
+        } catch { /* skip */ }
+      }
+    }
+    motivationEl.innerHTML = motivationText;
+  } catch {
+    motivationEl.innerHTML = pct >= 50 ? "You've shown real promise today. Keep that momentum going — every great student started exactly where you are." : "Every expert was once a beginner. This quiz is just your starting line, not your finish. Come back swinging — you've got everything it takes.";
+  }
+}
+
+// ── SHARE ─────────────────────────────────────────────────────────────────────
+document.getElementById('btn-share').addEventListener('click', () => {
+  const archTitle = document.getElementById('archetype-title').textContent;
+  const pct = document.getElementById('result-pct').textContent;
+  const text = `I'm a "${archTitle}" — I scored ${pct} on my ${selectedCourse} readiness quiz on CourseReady! Take your own test and find your archetype.`;
+  navigator.clipboard.writeText(text).then(() => {
+    const btn = document.getElementById('btn-share');
+    btn.innerHTML = '<i data-lucide="check"></i> Copied!';
+    lucide.createIcons();
+    setTimeout(() => { btn.innerHTML = '<i data-lucide="copy"></i> Copy Share Card'; lucide.createIcons(); }, 2500);
+  });
+});
+
+// ── RETAKE ────────────────────────────────────────────────────────────────────
+function retakeQuiz() {
+  questions = []; userAnswers = {}; selectedCourse = null; hintsUsed = 0; answeredStreak = 0;
+  document.getElementById('pick-controls').classList.remove('visible');
+  document.getElementById('course-search').value = '';
+  renderCourses();
+  showScreen('screen-pick');
+  lucide.createIcons();
+}
+
+// ── INIT ──────────────────────────────────────────────────────────────────────
 renderCourses();
 lucide.createIcons();
 </script>
