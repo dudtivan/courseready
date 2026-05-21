@@ -440,7 +440,7 @@
       </div>
       <span class="nav-name" id="nav-name">—</span>
     </div>
-    <a href="/api/auth?action=logout" class="btn-logout">
+    <a href="#" onclick="logout()" class="btn-logout">
       <i data-lucide="log-out"></i> Logout
     </a>
   </div>
@@ -584,11 +584,24 @@
     return info;
   }
 
-  // ── Parse session cookie ──
+  // ── Session: read from URL hash (fresh login) or localStorage (returning) ──
   function getSession() {
-    const match = document.cookie.match(/(?:^|;\s*)cr_user=([^;]+)/);
-    if (!match) return null;
-    try { return JSON.parse(atob(match[1])); } catch { return null; }
+    // 1. Check URL hash for fresh login: #session=base64...
+    const hash = window.location.hash;
+    if (hash.startsWith('#session=')) {
+      try {
+        const encoded = hash.slice('#session='.length);
+        const user = JSON.parse(atob(encoded));
+        localStorage.setItem('cr_user', JSON.stringify(user));
+        history.replaceState(null, '', window.location.pathname);
+        return user;
+      } catch { /* fall through */ }
+    }
+    // 2. Fall back to localStorage for returning users
+    try {
+      const stored = localStorage.getItem('cr_user');
+      return stored ? JSON.parse(stored) : null;
+    } catch { return null; }
   }
 
   // ── Populate UI ──
@@ -677,6 +690,11 @@
 
     // Init Lucide icons
     lucide.createIcons();
+  }
+
+  function logout() {
+    localStorage.removeItem('cr_user');
+    window.location.href = '/login.html';
   }
 
   init();
