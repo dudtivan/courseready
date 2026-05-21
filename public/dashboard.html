@@ -768,6 +768,33 @@
   }
 
   // ── Auth guard ──
+  // ── Record this login + quiz stats to the backend ──
+  // Called every time the dashboard loads. Fire-and-forget (silent fail).
+  async function recordUserToServer(user) {
+    try {
+      const quizHistory       = JSON.parse(localStorage.getItem('cr_quiz_history') || '[]');
+      const questionsAnswered = quizHistory.reduce((s, r) => s + (r.total || 0), 0);
+      const avgScore          = quizHistory.length
+        ? Math.round(quizHistory.reduce((s, r) => s + (r.pct || 0), 0) / quizHistory.length)
+        : 0;
+
+      await fetch('/api/users', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        // Cookie is sent automatically — session is read server-side
+        body: JSON.stringify({
+          quizzesDone:        quizHistory.length,
+          questionsAnswered,
+          avgScore,
+          quizHistory,
+        }),
+      });
+    } catch (e) {
+      // Silently ignore — never block the dashboard from loading
+      console.warn('[CourseReady] Could not record user to server:', e.message);
+    }
+  }
+
   function init() {
     const user = getSession();
     const overlay = document.getElementById('auth-loading');
@@ -791,6 +818,7 @@
     populateDashboard(user);
     renderQuizHistory();
     renderStrengthsWeaknesses();
+    recordUserToServer(user); // ← sends login + quiz data to the backend
 
     overlay.classList.add('hidden');
     setTimeout(() => overlay.remove(), 500);

@@ -1,0 +1,1015 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CourseReady — Users Admin</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --navy:      #0b1f4a;
+      --navy-mid:  #122860;
+      --navy-light:#1a3470;
+      --gold:      #f5c842;
+      --gold-dim:  #c9a82c;
+      --cream:     #fdf8ee;
+      --white:     #ffffff;
+      --slate:     #8898bb;
+      --text:      #1a2e5a;
+      --radius:    14px;
+      --success:   #4ade80;
+      --danger:    #f87171;
+      --info:      #60a5fa;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--navy);
+      color: var(--white);
+      min-height: 100vh;
+    }
+
+    body::before {
+      content: '';
+      position: fixed; inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+      pointer-events: none; z-index: 0;
+    }
+
+    /* ── NAV ── */
+    nav {
+      position: sticky; top: 0; z-index: 100;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 16px 6vw;
+      background: rgba(11,31,74,0.97);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid rgba(245,200,66,0.15);
+    }
+
+    .nav-left { display: flex; align-items: center; gap: 20px; }
+
+    .nav-logo {
+      display: flex; align-items: center; gap: 10px; text-decoration: none;
+    }
+    .nav-logo .logo-icon {
+      width: 36px; height: 36px; background: var(--gold);
+      border-radius: 8px; display: flex; align-items: center; justify-content: center;
+      font-size: 18px;
+    }
+    .nav-logo span {
+      font-family: 'Playfair Display', serif; font-size: 1.2rem; color: var(--white);
+    }
+    .nav-logo span b { color: var(--gold); }
+
+    .admin-badge {
+      background: rgba(245,200,66,0.12);
+      border: 1px solid rgba(245,200,66,0.3);
+      color: var(--gold);
+      font-size: 0.7rem; font-weight: 700; letter-spacing: 0.08em;
+      text-transform: uppercase; padding: 4px 10px; border-radius: 100px;
+    }
+
+    .nav-right { display: flex; align-items: center; gap: 12px; }
+
+    .btn-nav {
+      display: flex; align-items: center; gap: 6px;
+      background: rgba(255,255,255,0.07);
+      border: 1px solid rgba(255,255,255,0.1);
+      color: rgba(255,255,255,0.65);
+      font-family: 'DM Sans', sans-serif; font-size: 0.82rem; font-weight: 500;
+      padding: 7px 14px; border-radius: 8px;
+      cursor: pointer; text-decoration: none;
+      transition: all 0.2s;
+    }
+    .btn-nav:hover { background: rgba(245,200,66,0.1); color: var(--gold); border-color: rgba(245,200,66,0.25); }
+
+    .btn-export {
+      display: flex; align-items: center; gap: 6px;
+      background: var(--gold); color: var(--navy);
+      font-family: 'DM Sans', sans-serif; font-size: 0.82rem; font-weight: 700;
+      padding: 8px 16px; border-radius: 8px;
+      cursor: pointer; border: none; transition: all 0.2s;
+    }
+    .btn-export:hover { background: #e8bb30; transform: translateY(-1px); }
+
+    /* ── MAIN ── */
+    .main {
+      max-width: 1200px; margin: 0 auto;
+      padding: 40px 6vw 60px;
+      position: relative; z-index: 1;
+    }
+
+    /* ── PAGE HEADER ── */
+    .page-header {
+      margin-bottom: 32px;
+      animation: fadeUp 0.5s ease both;
+    }
+    .page-header .label {
+      font-size: 0.72rem; font-weight: 700; letter-spacing: 0.1em;
+      text-transform: uppercase; color: var(--gold-dim); margin-bottom: 6px;
+    }
+    .page-header h1 {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(1.6rem, 3vw, 2.2rem);
+      font-weight: 900; color: var(--white); line-height: 1.2;
+    }
+    .page-header p { font-size: 0.88rem; color: var(--slate); margin-top: 6px; }
+
+    /* ── STATS ROW ── */
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 16px; margin-bottom: 28px;
+      animation: fadeUp 0.5s 0.1s ease both;
+    }
+
+    .stat-card {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 16px; padding: 20px 22px;
+      position: relative; overflow: hidden;
+      transition: transform 0.2s, border-color 0.2s;
+    }
+    .stat-card:hover { transform: translateY(-2px); border-color: rgba(245,200,66,0.2); }
+    .stat-card::before {
+      content: '';
+      position: absolute; top: 0; left: 0; right: 0; height: 2px;
+      background: var(--accent, var(--gold));
+      border-radius: 16px 16px 0 0;
+    }
+    .stat-card.blue  { --accent: var(--info); }
+    .stat-card.green { --accent: var(--success); }
+    .stat-card.red   { --accent: var(--danger); }
+
+    .stat-label {
+      font-size: 0.72rem; font-weight: 700; letter-spacing: 0.08em;
+      text-transform: uppercase; color: var(--slate); margin-bottom: 10px;
+    }
+    .stat-val {
+      font-family: 'Playfair Display', serif;
+      font-size: 2rem; font-weight: 900; color: var(--white); line-height: 1;
+    }
+    .stat-sub { font-size: 0.75rem; color: var(--slate); margin-top: 4px; }
+
+    /* ── CONTROLS ── */
+    .controls {
+      display: flex; align-items: center; gap: 12px;
+      flex-wrap: wrap; margin-bottom: 20px;
+      animation: fadeUp 0.5s 0.15s ease both;
+    }
+
+    .search-wrap {
+      position: relative; flex: 1; min-width: 200px; max-width: 360px;
+    }
+    .search-wrap svg {
+      position: absolute; left: 12px; top: 50%; transform: translateY(-50%);
+      color: var(--slate); pointer-events: none;
+    }
+    .search-input {
+      width: 100%; background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 10px; padding: 10px 14px 10px 38px;
+      font-family: 'DM Sans', sans-serif; font-size: 0.88rem; color: var(--white);
+      transition: border-color 0.2s;
+      outline: none;
+    }
+    .search-input::placeholder { color: var(--slate); }
+    .search-input:focus { border-color: rgba(245,200,66,0.4); }
+
+    .filter-select {
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 10px; padding: 10px 14px;
+      font-family: 'DM Sans', sans-serif; font-size: 0.88rem; color: var(--white);
+      cursor: pointer; outline: none; transition: border-color 0.2s;
+    }
+    .filter-select:focus { border-color: rgba(245,200,66,0.4); }
+    .filter-select option { background: var(--navy-mid); }
+
+    .results-count {
+      font-size: 0.82rem; color: var(--slate); margin-left: auto;
+    }
+    .results-count span { color: var(--white); font-weight: 600; }
+
+    /* ── TABLE ── */
+    .table-wrap {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 20px; overflow: hidden;
+      animation: fadeUp 0.5s 0.2s ease both;
+    }
+
+    table { width: 100%; border-collapse: collapse; }
+
+    thead tr {
+      background: rgba(255,255,255,0.04);
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+    }
+    thead th {
+      padding: 14px 18px;
+      text-align: left; font-size: 0.7rem; font-weight: 700;
+      letter-spacing: 0.09em; text-transform: uppercase;
+      color: var(--slate); white-space: nowrap;
+      cursor: pointer; user-select: none;
+      transition: color 0.2s;
+    }
+    thead th:hover { color: var(--gold); }
+    thead th .sort-icon { opacity: 0.4; margin-left: 4px; font-size: 0.65rem; }
+    thead th.sorted { color: var(--gold); }
+    thead th.sorted .sort-icon { opacity: 1; }
+
+    tbody tr {
+      border-bottom: 1px solid rgba(255,255,255,0.04);
+      transition: background 0.15s;
+    }
+    tbody tr:last-child { border-bottom: none; }
+    tbody tr:hover { background: rgba(245,200,66,0.03); }
+
+    td { padding: 16px 18px; font-size: 0.88rem; vertical-align: middle; }
+
+    /* User cell */
+    .user-cell { display: flex; align-items: center; gap: 12px; }
+    .user-avatar {
+      width: 38px; height: 38px; border-radius: 50%; flex-shrink: 0;
+      background: var(--navy-light);
+      border: 2px solid rgba(245,200,66,0.2);
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'Playfair Display', serif;
+      font-size: 0.9rem; font-weight: 700; color: var(--gold);
+      overflow: hidden;
+    }
+    .user-avatar img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
+    .user-name { font-weight: 600; color: var(--white); font-size: 0.9rem; }
+    .user-email { font-size: 0.75rem; color: var(--slate); margin-top: 1px; }
+
+    /* Q count pill */
+    .q-count {
+      display: inline-flex; align-items: center; gap: 5px;
+      background: rgba(96,165,250,0.1); border: 1px solid rgba(96,165,250,0.2);
+      color: var(--info); font-weight: 700; font-size: 0.82rem;
+      padding: 4px 12px; border-radius: 100px;
+    }
+    .q-count.high { background: rgba(74,222,128,0.1); border-color: rgba(74,222,128,0.2); color: var(--success); }
+    .q-count.zero { background: rgba(255,255,255,0.04); border-color: rgba(255,255,255,0.1); color: var(--slate); }
+
+    /* Score bar */
+    .score-wrap { display: flex; align-items: center; gap: 10px; min-width: 120px; }
+    .score-bar-bg {
+      flex: 1; height: 5px; background: rgba(255,255,255,0.07); border-radius: 100px; overflow: hidden;
+    }
+    .score-bar-fill {
+      height: 100%; border-radius: 100px; transition: width 0.6s ease;
+    }
+    .score-val { font-size: 0.8rem; font-weight: 700; width: 38px; text-align: right; flex-shrink: 0; }
+
+    /* Level badge */
+    .lvl-badge {
+      display: inline-flex; align-items: center; gap: 5px;
+      font-size: 0.78rem; font-weight: 700;
+      padding: 3px 10px; border-radius: 100px;
+    }
+    .lvl-1 { background: rgba(139,92,246,0.12); border: 1px solid rgba(139,92,246,0.25); color: #a78bfa; }
+    .lvl-2 { background: rgba(96,165,250,0.12); border: 1px solid rgba(96,165,250,0.25); color: var(--info); }
+    .lvl-3 { background: rgba(74,222,128,0.12); border: 1px solid rgba(74,222,128,0.25); color: var(--success); }
+    .lvl-4 { background: rgba(245,200,66,0.12); border: 1px solid rgba(245,200,66,0.25); color: var(--gold); }
+    .lvl-5, .lvl-6 { background: rgba(248,113,113,0.12); border: 1px solid rgba(248,113,113,0.25); color: #fca5a5; }
+
+    /* Date */
+    .date-cell { color: var(--slate); font-size: 0.82rem; white-space: nowrap; }
+    .date-cell .time-ago { display: block; color: rgba(255,255,255,0.5); font-size: 0.75rem; margin-top: 2px; }
+
+    /* Status */
+    .status-dot {
+      display: inline-flex; align-items: center; gap: 6px;
+      font-size: 0.78rem; font-weight: 600;
+    }
+    .status-dot::before {
+      content: ''; width: 7px; height: 7px; border-radius: 50%;
+      background: var(--dot-color, var(--slate));
+      box-shadow: 0 0 6px var(--dot-color, transparent);
+    }
+    .status-active { color: var(--success); --dot-color: var(--success); }
+    .status-idle   { color: var(--gold);    --dot-color: var(--gold); }
+    .status-new    { color: var(--info);    --dot-color: var(--info); }
+
+    /* Actions */
+    .row-actions { display: flex; align-items: center; gap: 6px; }
+    .row-btn {
+      width: 30px; height: 30px; border-radius: 8px;
+      background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08);
+      color: var(--slate); cursor: pointer; display: flex; align-items: center; justify-content: center;
+      transition: all 0.2s; font-size: 14px;
+    }
+    .row-btn:hover { background: rgba(245,200,66,0.1); color: var(--gold); border-color: rgba(245,200,66,0.25); }
+    .row-btn.danger:hover { background: rgba(248,113,113,0.1); color: var(--danger); border-color: rgba(248,113,113,0.25); }
+
+    /* ── EMPTY STATE ── */
+    .empty-state {
+      text-align: center; padding: 60px 24px;
+    }
+    .empty-icon {
+      width: 64px; height: 64px; margin: 0 auto 20px;
+      background: rgba(245,200,66,0.08); border: 1px solid rgba(245,200,66,0.2);
+      border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 26px;
+    }
+    .empty-state h3 { font-family: 'Playfair Display', serif; font-size: 1.3rem; color: var(--white); margin-bottom: 8px; }
+    .empty-state p { font-size: 0.88rem; color: var(--slate); line-height: 1.6; max-width: 340px; margin: 0 auto; }
+
+    /* ── DETAIL DRAWER ── */
+    .drawer-overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.6);
+      backdrop-filter: blur(4px); z-index: 200;
+      opacity: 0; pointer-events: none; transition: opacity 0.3s;
+    }
+    .drawer-overlay.open { opacity: 1; pointer-events: all; }
+
+    .drawer {
+      position: fixed; top: 0; right: 0; bottom: 0; width: 420px; max-width: 100vw;
+      background: var(--navy-mid); border-left: 1px solid rgba(255,255,255,0.08);
+      z-index: 201; transform: translateX(100%); transition: transform 0.35s cubic-bezier(0.16,1,0.3,1);
+      overflow-y: auto; display: flex; flex-direction: column;
+    }
+    .drawer.open { transform: translateX(0); }
+
+    .drawer-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 20px 24px; border-bottom: 1px solid rgba(255,255,255,0.06);
+      position: sticky; top: 0; background: var(--navy-mid); z-index: 1;
+    }
+    .drawer-header h3 {
+      font-family: 'Playfair Display', serif; font-size: 1.1rem; font-weight: 700;
+    }
+    .drawer-close {
+      width: 32px; height: 32px; border-radius: 8px;
+      background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.08);
+      color: var(--slate); cursor: pointer; display: flex; align-items: center; justify-content: center;
+      font-size: 18px; transition: all 0.2s;
+    }
+    .drawer-close:hover { background: rgba(248,113,113,0.1); color: var(--danger); }
+
+    .drawer-body { padding: 24px; flex: 1; }
+
+    .drawer-user-info {
+      display: flex; align-items: center; gap: 16px; margin-bottom: 28px;
+    }
+    .drawer-avatar {
+      width: 56px; height: 56px; border-radius: 50%;
+      border: 2px solid rgba(245,200,66,0.3);
+      background: var(--navy-light);
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'Playfair Display', serif; font-size: 1.3rem; font-weight: 700; color: var(--gold);
+      overflow: hidden; flex-shrink: 0;
+    }
+    .drawer-avatar img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
+    .drawer-user-name { font-size: 1.05rem; font-weight: 700; color: var(--white); }
+    .drawer-user-email { font-size: 0.8rem; color: var(--slate); margin-top: 2px; }
+
+    .drawer-section { margin-bottom: 24px; }
+    .drawer-section-title {
+      font-size: 0.68rem; font-weight: 700; letter-spacing: 0.1em;
+      text-transform: uppercase; color: var(--slate); margin-bottom: 12px;
+      padding-bottom: 8px; border-bottom: 1px solid rgba(255,255,255,0.06);
+    }
+
+    .drawer-stat-row {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 9px 0; border-bottom: 1px solid rgba(255,255,255,0.04);
+    }
+    .drawer-stat-row:last-child { border-bottom: none; }
+    .drawer-stat-label { font-size: 0.83rem; color: var(--slate); }
+    .drawer-stat-val { font-size: 0.88rem; font-weight: 600; color: var(--white); }
+
+    .quiz-history-item {
+      display: flex; align-items: center; gap: 12px;
+      padding: 12px 0; border-bottom: 1px solid rgba(255,255,255,0.04);
+    }
+    .quiz-history-item:last-child { border-bottom: none; }
+    .quiz-score-ring {
+      flex-shrink: 0; width: 42px; height: 42px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center; position: relative;
+    }
+    .quiz-score-ring::before {
+      content: ''; position: absolute; width: 28px; height: 28px;
+      border-radius: 50%; background: var(--navy-mid);
+    }
+    .quiz-score-ring span {
+      position: relative; z-index: 1; font-size: 0.65rem; font-weight: 700;
+    }
+    .qh-course { font-size: 0.83rem; font-weight: 600; color: var(--white); }
+    .qh-meta { font-size: 0.73rem; color: var(--slate); margin-top: 2px; }
+
+    .no-quiz-history {
+      text-align: center; padding: 28px 0;
+      font-size: 0.85rem; color: var(--slate);
+    }
+
+    /* ── PAGINATION ── */
+    .pagination {
+      display: flex; align-items: center; justify-content: center; gap: 6px;
+      margin-top: 24px; animation: fadeUp 0.5s 0.25s ease both;
+    }
+    .page-btn {
+      width: 36px; height: 36px; border-radius: 9px;
+      background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08);
+      color: var(--slate); cursor: pointer; display: flex; align-items: center; justify-content: center;
+      font-size: 0.85rem; font-weight: 600; transition: all 0.2s;
+    }
+    .page-btn:hover { background: rgba(245,200,66,0.08); color: var(--gold); }
+    .page-btn.active { background: var(--gold); color: var(--navy); border-color: var(--gold); }
+    .page-btn:disabled { opacity: 0.3; cursor: default; }
+
+    /* ── TOAST ── */
+    .toast {
+      position: fixed; bottom: 28px; right: 28px;
+      background: rgba(74,222,128,0.12); border: 1px solid rgba(74,222,128,0.3);
+      color: var(--success); font-size: 0.85rem; font-weight: 600;
+      padding: 12px 18px; border-radius: 12px; z-index: 300;
+      transform: translateY(80px); opacity: 0; transition: all 0.3s;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .toast.show { transform: translateY(0); opacity: 1; }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(18px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .hide-mobile { display: none !important; }
+      .drawer { width: 100vw; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-left">
+    <a href="dashboard.html" class="nav-logo">
+      <div class="logo-icon">🎓</div>
+      <span>Course<b>Ready</b></span>
+    </a>
+    <span class="admin-badge">Admin</span>
+  </div>
+  <div class="nav-right">
+    <button class="btn-nav" onclick="loadUsers()">
+      <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-.18-3.36"/></svg>
+      Refresh
+    </button>
+    <button class="btn-export" onclick="exportCSV()">
+      <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      Export CSV
+    </button>
+  </div>
+</nav>
+
+<!-- MAIN -->
+<div class="main">
+
+  <!-- Header -->
+  <div class="page-header">
+    <div class="label">Admin Panel</div>
+    <h1>User Management</h1>
+    <p>Track logins, quiz activity, and progress for all CourseReady students.</p>
+  </div>
+
+  <!-- Stats -->
+  <div class="stats-row" id="stats-row">
+    <div class="stat-card">
+      <div class="stat-label">Total Users</div>
+      <div class="stat-val" id="stat-total">—</div>
+      <div class="stat-sub">Registered via Google</div>
+    </div>
+    <div class="stat-card blue">
+      <div class="stat-label">Active Today</div>
+      <div class="stat-val" id="stat-today">—</div>
+      <div class="stat-sub">Logged in last 24h</div>
+    </div>
+    <div class="stat-card green">
+      <div class="stat-label">Questions Answered</div>
+      <div class="stat-val" id="stat-questions">—</div>
+      <div class="stat-sub">Total across all users</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Avg. Score</div>
+      <div class="stat-val" id="stat-avgscore">—</div>
+      <div class="stat-sub">Across all quizzes taken</div>
+    </div>
+  </div>
+
+  <!-- Controls -->
+  <div class="controls">
+    <div class="search-wrap">
+      <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input type="text" class="search-input" id="search-input" placeholder="Search by name or email…" oninput="applyFilters()">
+    </div>
+    <select class="filter-select" id="filter-activity" onchange="applyFilters()">
+      <option value="all">All Activity</option>
+      <option value="active">Active (24h)</option>
+      <option value="quizzes">Has Quizzes</option>
+      <option value="no-quizzes">No Quizzes</option>
+    </select>
+    <select class="filter-select" id="sort-by" onchange="applyFilters()">
+      <option value="lastLogin">Latest Login</option>
+      <option value="questions">Most Questions</option>
+      <option value="score">Best Score</option>
+      <option value="name">Name A–Z</option>
+      <option value="xp">Most XP</option>
+    </select>
+    <div class="results-count">Showing <span id="count-visible">—</span> users</div>
+  </div>
+
+  <!-- Table -->
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>User</th>
+          <th class="hide-mobile">Level</th>
+          <th>Questions</th>
+          <th class="hide-mobile">Avg. Score</th>
+          <th class="hide-mobile">XP</th>
+          <th class="hide-mobile">Last Login</th>
+          <th>Status</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody id="users-tbody">
+        <tr><td colspan="8"><div class="empty-state">
+          <div class="empty-icon">⏳</div>
+          <h3>Loading users…</h3>
+          <p>Fetching user data from the registry.</p>
+        </div></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="pagination" id="pagination"></div>
+
+</div>
+
+<!-- Detail Drawer -->
+<div class="drawer-overlay" id="drawer-overlay" onclick="closeDrawer()"></div>
+<div class="drawer" id="drawer">
+  <div class="drawer-header">
+    <h3>User Details</h3>
+    <button class="drawer-close" onclick="closeDrawer()">✕</button>
+  </div>
+  <div class="drawer-body" id="drawer-body"></div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast">✓ <span id="toast-msg"></span></div>
+
+<script>
+  // ─────────────────────────────────────────────────────────
+  //  DATA LAYER — fetches real users from /api/users
+  //  Requires: x-admin-secret header (set ADMIN_SECRET in Vercel env vars
+  //  and paste your secret into ADMIN_SECRET_VALUE below)
+  // ─────────────────────────────────────────────────────────
+
+  // ⚠️  Paste your ADMIN_SECRET value here (same as your Vercel env var)
+  //     This page is admin-only — keep the URL private, don't publish it.
+  const ADMIN_SECRET_VALUE = '7fK29xQmL9pA2vN8sD4eR1tY';
+
+  const PAGE_SIZE = 15;
+
+  let allUsers = [];
+  let filteredUsers = [];
+  let currentPage = 1;
+
+  // ── Fetch users from the real backend ──
+  async function loadUsers() {
+    const tbody = document.getElementById('users-tbody');
+    tbody.innerHTML = `<tr><td colspan="8"><div class="empty-state">
+      <div class="empty-icon">⏳</div>
+      <h3>Loading users…</h3>
+      <p>Fetching live data from the server.</p>
+    </div></td></tr>`;
+
+    try {
+      const res = await fetch('/api/users', {
+        headers: { 'x-admin-secret': ADMIN_SECRET_VALUE },
+      });
+
+      if (res.status === 401) {
+        tbody.innerHTML = `<tr><td colspan="8"><div class="empty-state">
+          <div class="empty-icon">🔒</div>
+          <h3>Unauthorized</h3>
+          <p>Wrong or missing ADMIN_SECRET. Update ADMIN_SECRET_VALUE in users.html.</p>
+        </div></td></tr>`;
+        return;
+      }
+
+      if (!res.ok) throw new Error(`Server error ${res.status}`);
+
+      const raw = await res.json();
+
+      // Map Supabase snake_case columns → camelCase used by the rest of this page
+      allUsers = raw.map(u => ({
+        id:                 u.id,
+        name:               u.name,
+        email:              u.email,
+        picture:            u.picture || '',
+        xp:                 u.xp || 0,
+        level:              u.level || 1,
+        streak:             u.streak || 0,
+        badges:             u.badges || [],
+        quizzesDone:        u.quizzes_done || 0,
+        questionsAnswered:  u.questions_answered || 0,
+        avgScore:           u.avg_score || 0,
+        quizHistory:        u.quiz_history || [],
+        firstSeen:          u.first_seen,
+        lastLogin:          u.last_login,
+      }));
+
+      applyFilters();
+      renderStats(allUsers);
+
+      if (allUsers.length === 0) {
+        showToast('No users yet — share your site so people can log in!');
+      }
+    } catch (e) {
+      tbody.innerHTML = `<tr><td colspan="8"><div class="empty-state">
+        <div class="empty-icon">⚠️</div>
+        <h3>Could not load users</h3>
+        <p>${e.message}. Check your Vercel env vars and Supabase table.</p>
+      </div></td></tr>`;
+    }
+  }
+
+  // ── Stats ──
+  function renderStats(users) {
+    document.getElementById('stat-total').textContent = users.length;
+
+    const now = Date.now();
+    const activeToday = users.filter(u => now - new Date(u.lastLogin).getTime() < 86400000).length;
+    document.getElementById('stat-today').textContent = activeToday;
+
+    const totalQ = users.reduce((s, u) => s + (u.questionsAnswered || 0), 0);
+    document.getElementById('stat-questions').textContent = totalQ.toLocaleString();
+
+    const withScores = users.filter(u => u.avgScore > 0);
+    const avg = withScores.length
+      ? Math.round(withScores.reduce((s, u) => s + u.avgScore, 0) / withScores.length)
+      : 0;
+    document.getElementById('stat-avgscore').textContent = avg ? avg + '%' : '—';
+  }
+
+  // ── Filter + Sort ──
+  function applyFilters() {
+    const query = document.getElementById('search-input').value.trim().toLowerCase();
+    const activity = document.getElementById('filter-activity').value;
+    const sortBy = document.getElementById('sort-by').value;
+    const now = Date.now();
+
+    let result = [...allUsers];
+
+    if (query) {
+      result = result.filter(u =>
+        u.name.toLowerCase().includes(query) ||
+        u.email.toLowerCase().includes(query)
+      );
+    }
+
+    if (activity === 'active') {
+      result = result.filter(u => now - new Date(u.lastLogin).getTime() < 86400000);
+    } else if (activity === 'quizzes') {
+      result = result.filter(u => u.quizzesDone > 0);
+    } else if (activity === 'no-quizzes') {
+      result = result.filter(u => !u.quizzesDone);
+    }
+
+    result.sort((a, b) => {
+      if (sortBy === 'questions') return (b.questionsAnswered || 0) - (a.questionsAnswered || 0);
+      if (sortBy === 'score')     return (b.avgScore || 0) - (a.avgScore || 0);
+      if (sortBy === 'name')      return a.name.localeCompare(b.name);
+      if (sortBy === 'xp')        return (b.xp || 0) - (a.xp || 0);
+      return new Date(b.lastLogin) - new Date(a.lastLogin);
+    });
+
+    filteredUsers = result;
+    currentPage = 1;
+    document.getElementById('count-visible').textContent = result.length;
+    renderTable();
+    renderPagination();
+  }
+
+  // ── Level info ──
+  const LEVELS = {
+    1: { title: 'Freshman',  xpRequired: 0,    xpNext: 300  },
+    2: { title: 'Sophomore', xpRequired: 300,  xpNext: 800  },
+    3: { title: 'Junior',    xpRequired: 800,  xpNext: 1500 },
+    4: { title: 'Senior',    xpRequired: 1500, xpNext: 2500 },
+    5: { title: 'Scholar',   xpRequired: 2500, xpNext: 4000 },
+    6: { title: 'Summa',     xpRequired: 4000, xpNext: 9999 },
+  };
+
+  function getLevelInfo(xp) {
+    for (let l = 6; l >= 1; l--) {
+      if (xp >= LEVELS[l].xpRequired) return { level: l, ...LEVELS[l] };
+    }
+    return { level: 1, ...LEVELS[1] };
+  }
+
+  // ── Time helpers ──
+  function timeAgo(iso) {
+    if (!iso) return '—';
+    const diff = Date.now() - new Date(iso).getTime();
+    const mins = Math.floor(diff / 60000);
+    if (mins < 1)    return 'Just now';
+    if (mins < 60)   return `${mins}m ago`;
+    const hrs = Math.floor(mins / 60);
+    if (hrs < 24)    return `${hrs}h ago`;
+    const days = Math.floor(hrs / 24);
+    if (days < 7)    return `${days}d ago`;
+    return new Date(iso).toLocaleDateString('en-PH', { month: 'short', day: 'numeric' });
+  }
+
+  function formatDate(iso) {
+    if (!iso) return '—';
+    return new Date(iso).toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric' });
+  }
+
+  function getStatus(user) {
+    const diff = Date.now() - new Date(user.lastLogin).getTime();
+    if (diff < 86400000) return { cls: 'status-active', label: 'Active' };
+    if (diff < 86400000 * 3) return { cls: 'status-idle', label: 'Recent' };
+    if (!user.quizzesDone) return { cls: 'status-new', label: 'New' };
+    return { cls: '', label: 'Inactive' };
+  }
+
+  function avatarInitials(name) {
+    return name.split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase();
+  }
+
+  function scoreColor(pct) {
+    if (pct >= 75) return '#4ade80';
+    if (pct >= 50) return '#f5c842';
+    return '#f87171';
+  }
+
+  // ── Render Table ──
+  function renderTable() {
+    const tbody = document.getElementById('users-tbody');
+
+    if (filteredUsers.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="8"><div class="empty-state">
+        <div class="empty-icon">🔍</div>
+        <h3>No users found</h3>
+        <p>Try adjusting your search or filters.</p>
+      </div></td></tr>`;
+      return;
+    }
+
+    const start = (currentPage - 1) * PAGE_SIZE;
+    const page = filteredUsers.slice(start, start + PAGE_SIZE);
+
+    tbody.innerHTML = page.map((u, i) => {
+      const lvl = getLevelInfo(u.xp || 0);
+      const status = getStatus(u);
+      const qCount = u.questionsAnswered || 0;
+      const qClass = qCount >= 50 ? 'high' : qCount === 0 ? 'zero' : '';
+      const scoreCol = u.avgScore > 0
+        ? `<div class="score-wrap">
+            <div class="score-bar-bg"><div class="score-bar-fill" style="width:${u.avgScore}%;background:${scoreColor(u.avgScore)}"></div></div>
+            <div class="score-val" style="color:${scoreColor(u.avgScore)}">${u.avgScore}%</div>
+           </div>`
+        : `<span style="color:var(--slate);font-size:0.8rem">No quizzes</span>`;
+
+      const avatarHtml = u.picture
+        ? `<div class="user-avatar"><img src="${u.picture}" alt="${u.name}" onerror="this.parentElement.textContent='${avatarInitials(u.name)}'"></div>`
+        : `<div class="user-avatar">${avatarInitials(u.name)}</div>`;
+
+      return `
+        <tr>
+          <td>
+            <div class="user-cell">
+              ${avatarHtml}
+              <div>
+                <div class="user-name">${escHtml(u.name)}</div>
+                <div class="user-email">${escHtml(u.email)}</div>
+              </div>
+            </div>
+          </td>
+          <td class="hide-mobile">
+            <span class="lvl-badge lvl-${lvl.level}">Lv.${lvl.level} ${lvl.title}</span>
+          </td>
+          <td>
+            <span class="q-count ${qClass}">
+              <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+              ${qCount.toLocaleString()} Q
+            </span>
+          </td>
+          <td class="hide-mobile">${scoreCol}</td>
+          <td class="hide-mobile">
+            <span style="color:var(--gold);font-weight:600;font-size:0.85rem">${(u.xp || 0).toLocaleString()}</span>
+            <span style="color:var(--slate);font-size:0.75rem"> XP</span>
+          </td>
+          <td class="date-cell hide-mobile">
+            ${formatDate(u.lastLogin)}
+            <span class="time-ago">${timeAgo(u.lastLogin)}</span>
+          </td>
+          <td>
+            <span class="status-dot ${status.cls}">${status.label}</span>
+          </td>
+          <td>
+            <div class="row-actions">
+              <button class="row-btn" title="View details" onclick="openDrawer(${start + i})">
+                <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+              </button>
+              <button class="row-btn danger" title="Remove user" onclick="removeUser('${escHtml(u.email)}')">
+                <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+              </button>
+            </div>
+          </td>
+        </tr>`;
+    }).join('');
+  }
+
+  // ── Pagination ──
+  function renderPagination() {
+    const total = Math.ceil(filteredUsers.length / PAGE_SIZE);
+    const el = document.getElementById('pagination');
+    if (total <= 1) { el.innerHTML = ''; return; }
+
+    let html = `<button class="page-btn" ${currentPage === 1 ? 'disabled' : ''} onclick="goPage(${currentPage - 1})">‹</button>`;
+    for (let p = 1; p <= total; p++) {
+      if (p === 1 || p === total || Math.abs(p - currentPage) <= 1) {
+        html += `<button class="page-btn ${p === currentPage ? 'active' : ''}" onclick="goPage(${p})">${p}</button>`;
+      } else if (Math.abs(p - currentPage) === 2) {
+        html += `<span style="color:var(--slate);padding:0 4px">…</span>`;
+      }
+    }
+    html += `<button class="page-btn" ${currentPage === total ? 'disabled' : ''} onclick="goPage(${currentPage + 1})">›</button>`;
+    el.innerHTML = html;
+  }
+
+  function goPage(p) {
+    currentPage = p;
+    renderTable();
+    renderPagination();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  // ── Detail Drawer ──
+  function openDrawer(idx) {
+    const u = filteredUsers[idx];
+    if (!u) return;
+    const lvl = getLevelInfo(u.xp || 0);
+    const status = getStatus(u);
+
+    const avatarHtml = u.picture
+      ? `<div class="drawer-avatar"><img src="${u.picture}" alt="${u.name}" onerror="this.textContent='${avatarInitials(u.name)}'"></div>`
+      : `<div class="drawer-avatar">${avatarInitials(u.name)}</div>`;
+
+    const quizItems = (u.quizHistory || []).slice().reverse().slice(0, 8).map(r => {
+      const color = scoreColor(r.pct);
+      const deg = Math.round((r.pct / 100) * 360);
+      return `
+        <div class="quiz-history-item">
+          <div class="quiz-score-ring" style="background:conic-gradient(${color} 0deg ${deg}deg, rgba(255,255,255,0.07) ${deg}deg)">
+            <span style="color:${color}">${r.pct}%</span>
+          </div>
+          <div>
+            <div class="qh-course">${escHtml(r.course)}</div>
+            <div class="qh-meta">${r.score}/${r.total} correct · ${formatDate(r.date)} · <span style="color:${r.passed ? '#4ade80' : '#f87171'}">${r.passed ? 'Passed' : 'Failed'}</span></div>
+          </div>
+        </div>`;
+    }).join('');
+
+    document.getElementById('drawer-body').innerHTML = `
+      <div class="drawer-user-info">
+        ${avatarHtml}
+        <div>
+          <div class="drawer-user-name">${escHtml(u.name)}</div>
+          <div class="drawer-user-email">${escHtml(u.email)}</div>
+        </div>
+      </div>
+
+      <div class="drawer-section">
+        <div class="drawer-section-title">Account Info</div>
+        <div class="drawer-stat-row">
+          <span class="drawer-stat-label">Status</span>
+          <span class="drawer-stat-val"><span class="status-dot ${status.cls}">${status.label}</span></span>
+        </div>
+        <div class="drawer-stat-row">
+          <span class="drawer-stat-label">First Seen</span>
+          <span class="drawer-stat-val">${formatDate(u.firstSeen)}</span>
+        </div>
+        <div class="drawer-stat-row">
+          <span class="drawer-stat-label">Last Login</span>
+          <span class="drawer-stat-val">${formatDate(u.lastLogin)} (${timeAgo(u.lastLogin)})</span>
+        </div>
+      </div>
+
+      <div class="drawer-section">
+        <div class="drawer-section-title">Progress</div>
+        <div class="drawer-stat-row">
+          <span class="drawer-stat-label">Level</span>
+          <span class="drawer-stat-val"><span class="lvl-badge lvl-${lvl.level}">Lv.${lvl.level} — ${lvl.title}</span></span>
+        </div>
+        <div class="drawer-stat-row">
+          <span class="drawer-stat-label">Total XP</span>
+          <span class="drawer-stat-val" style="color:var(--gold)">${(u.xp || 0).toLocaleString()} XP</span>
+        </div>
+        <div class="drawer-stat-row">
+          <span class="drawer-stat-label">Current Streak</span>
+          <span class="drawer-stat-val">🔥 ${u.streak || 0} days</span>
+        </div>
+        <div class="drawer-stat-row">
+          <span class="drawer-stat-label">Badges</span>
+          <span class="drawer-stat-val">${(u.badges || []).length} earned</span>
+        </div>
+      </div>
+
+      <div class="drawer-section">
+        <div class="drawer-section-title">Quiz Activity</div>
+        <div class="drawer-stat-row">
+          <span class="drawer-stat-label">Quizzes Taken</span>
+          <span class="drawer-stat-val">${u.quizzesDone || 0}</span>
+        </div>
+        <div class="drawer-stat-row">
+          <span class="drawer-stat-label">Questions Answered</span>
+          <span class="drawer-stat-val" style="color:var(--info)">${(u.questionsAnswered || 0).toLocaleString()}</span>
+        </div>
+        <div class="drawer-stat-row">
+          <span class="drawer-stat-label">Avg. Score</span>
+          <span class="drawer-stat-val" style="color:${scoreColor(u.avgScore || 0)}">${u.avgScore ? u.avgScore + '%' : '—'}</span>
+        </div>
+      </div>
+
+      ${(u.quizHistory || []).length > 0 ? `
+      <div class="drawer-section">
+        <div class="drawer-section-title">Recent Quiz History</div>
+        ${quizItems}
+      </div>` : `
+      <div class="no-quiz-history">📝 No quizzes taken yet.</div>`}
+    `;
+
+    document.getElementById('drawer-overlay').classList.add('open');
+    document.getElementById('drawer').classList.add('open');
+  }
+
+  function closeDrawer() {
+    document.getElementById('drawer-overlay').classList.remove('open');
+    document.getElementById('drawer').classList.remove('open');
+  }
+
+  // ── Remove user (local view only — does not delete from Supabase) ──
+  // To permanently delete, remove the row from Supabase directly.
+  function removeUser(email) {
+    if (!confirm(`Hide ${email} from this view?\n\n(To permanently delete, remove from Supabase.)`)) return;
+    allUsers = allUsers.filter(u => u.email !== email);
+    renderStats(allUsers);
+    applyFilters();
+    showToast('User hidden from view');
+  }
+
+  // ── Export CSV ──
+  function exportCSV() {
+    const headers = ['Name','Email','Level','XP','Streak','Quizzes Done','Questions Answered','Avg Score','Badges','First Seen','Last Login'];
+    const rows = allUsers.map(u => [
+      u.name, u.email,
+      getLevelInfo(u.xp || 0).title,
+      u.xp || 0, u.streak || 0,
+      u.quizzesDone || 0, u.questionsAnswered || 0,
+      u.avgScore ? u.avgScore + '%' : '0%',
+      (u.badges || []).join(';'),
+      formatDate(u.firstSeen), formatDate(u.lastLogin),
+    ]);
+
+    const csv = [headers, ...rows].map(r => r.map(v => `"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = `courseready-users-${new Date().toISOString().slice(0,10)}.csv`;
+    a.click(); URL.revokeObjectURL(url);
+    showToast('CSV exported successfully');
+  }
+
+  // ── Toast ──
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    document.getElementById('toast-msg').textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 3000);
+  }
+
+  // ── Util ──
+  function escHtml(s) {
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  loadUsers();
+
+</script>
+</body>
+</html>
