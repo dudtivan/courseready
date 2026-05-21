@@ -1,0 +1,1011 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CourseReady — Quiz</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --navy:      #0b1f4a;
+      --navy-mid:  #122860;
+      --navy-light:#1a3470;
+      --gold:      #f5c842;
+      --gold-dim:  #c9a82c;
+      --cream:     #fdf8ee;
+      --white:     #ffffff;
+      --slate:     #8898bb;
+      --text:      #1a2e5a;
+      --radius:    14px;
+      --success:   #4ade80;
+      --danger:    #f87171;
+    }
+
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--navy);
+      color: var(--white);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+    body::before {
+      content: '';
+      position: fixed; inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+      pointer-events: none; z-index: 0;
+    }
+
+    /* ── NAV ── */
+    nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 16px 6vw;
+      background: rgba(11,31,74,0.95);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid rgba(245,200,66,0.15);
+    }
+    .nav-logo {
+      display: flex; align-items: center; gap: 10px; text-decoration: none;
+    }
+    .nav-logo .logo-icon {
+      width: 36px; height: 36px; background: var(--gold);
+      border-radius: 8px; display: flex; align-items: center; justify-content: center; color: var(--navy);
+    }
+    .nav-logo .logo-icon svg { width: 20px; height: 20px; }
+    .nav-logo span { font-family: 'Playfair Display', serif; font-size: 1.2rem; color: var(--white); }
+    .nav-logo span b { color: var(--gold); }
+    .nav-back {
+      display: flex; align-items: center; gap: 6px;
+      color: var(--slate); font-size: 0.85rem; font-weight: 500;
+      text-decoration: none; transition: color 0.2s;
+    }
+    .nav-back:hover { color: var(--gold); }
+    .nav-back svg { width: 16px; height: 16px; }
+
+    /* ── SCREENS ── */
+    .screen {
+      display: none;
+      min-height: 100vh;
+      padding: 88px 6vw 60px;
+      position: relative; z-index: 1;
+    }
+    .screen.active { display: flex; flex-direction: column; align-items: center; }
+
+    /* ── SCREEN 1: COURSE PICKER ── */
+    #screen-pick { justify-content: flex-start; padding-top: 100px; }
+
+    .pick-header {
+      text-align: center; margin-bottom: 40px;
+      animation: fadeUp 0.6s ease both;
+    }
+    .pick-header .label {
+      font-size: 0.75rem; font-weight: 700; letter-spacing: 0.1em;
+      text-transform: uppercase; color: rgba(245,200,66,0.6); margin-bottom: 10px;
+    }
+    .pick-header h1 {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(1.8rem, 3.5vw, 2.8rem);
+      font-weight: 900; line-height: 1.15;
+    }
+    .pick-header h1 em { font-style: normal; color: var(--gold); }
+    .pick-header p { font-size: 0.95rem; color: var(--slate); margin-top: 10px; }
+
+    .pick-box {
+      width: 100%; max-width: 680px;
+      animation: fadeUp 0.6s 0.1s ease both;
+    }
+
+    /* Search */
+    .search-wrap {
+      position: relative; margin-bottom: 20px;
+    }
+    .search-wrap svg {
+      position: absolute; left: 16px; top: 50%; transform: translateY(-50%);
+      width: 18px; height: 18px; color: var(--slate); pointer-events: none;
+    }
+    #course-search {
+      width: 100%; padding: 14px 16px 14px 46px;
+      background: rgba(255,255,255,0.07);
+      border: 1px solid rgba(255,255,255,0.15);
+      border-radius: var(--radius);
+      color: var(--white); font-family: 'DM Sans', sans-serif; font-size: 0.95rem;
+      outline: none; transition: border-color 0.2s, background 0.2s;
+    }
+    #course-search::placeholder { color: var(--slate); }
+    #course-search:focus {
+      border-color: rgba(245,200,66,0.5);
+      background: rgba(255,255,255,0.1);
+    }
+
+    /* Course grid */
+    .course-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 10px;
+      max-height: 340px;
+      overflow-y: auto;
+      padding-right: 4px;
+    }
+    .course-grid::-webkit-scrollbar { width: 4px; }
+    .course-grid::-webkit-scrollbar-track { background: rgba(255,255,255,0.05); border-radius: 2px; }
+    .course-grid::-webkit-scrollbar-thumb { background: rgba(245,200,66,0.3); border-radius: 2px; }
+
+    .course-chip {
+      padding: 11px 16px;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 10px;
+      font-size: 0.82rem; font-weight: 500; color: rgba(255,255,255,0.8);
+      cursor: pointer; transition: all 0.15s;
+      text-align: left;
+    }
+    .course-chip:hover {
+      background: rgba(245,200,66,0.1);
+      border-color: rgba(245,200,66,0.35);
+      color: var(--gold);
+    }
+    .course-chip.selected {
+      background: rgba(245,200,66,0.15);
+      border-color: var(--gold);
+      color: var(--gold);
+      font-weight: 600;
+    }
+    .no-results {
+      grid-column: 1/-1; text-align: center;
+      padding: 24px; color: var(--slate); font-size: 0.88rem;
+    }
+
+    /* Selected course + question count */
+    .pick-controls {
+      margin-top: 24px;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 16px;
+      padding: 20px 24px;
+      display: none;
+      flex-direction: column; gap: 16px;
+      animation: fadeUp 0.3s ease both;
+    }
+    .pick-controls.visible { display: flex; }
+
+    .selected-course-label {
+      display: flex; align-items: center; gap: 10px;
+    }
+    .selected-course-label svg { width: 18px; height: 18px; color: var(--gold); }
+    .selected-course-label span { font-size: 0.88rem; color: var(--slate); }
+    .selected-course-label strong { color: var(--gold); }
+
+    .qcount-row {
+      display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+    }
+    .qcount-label { font-size: 0.85rem; color: var(--slate); white-space: nowrap; }
+    .qcount-opts { display: flex; gap: 8px; }
+    .qcount-btn {
+      width: 44px; height: 36px;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 8px; color: var(--white);
+      font-family: 'DM Sans', sans-serif; font-size: 0.88rem; font-weight: 600;
+      cursor: pointer; transition: all 0.15s;
+    }
+    .qcount-btn:hover { border-color: rgba(245,200,66,0.4); color: var(--gold); }
+    .qcount-btn.active {
+      background: rgba(245,200,66,0.15);
+      border-color: var(--gold); color: var(--gold);
+    }
+
+    .btn-start {
+      width: 100%;
+      background: var(--gold); color: var(--navy);
+      font-family: 'DM Sans', sans-serif; font-size: 1rem; font-weight: 700;
+      padding: 15px; border: none; border-radius: var(--radius);
+      cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;
+      transition: background 0.2s, transform 0.15s, box-shadow 0.2s;
+      box-shadow: 0 4px 20px rgba(245,200,66,0.25);
+    }
+    .btn-start:hover { background: var(--gold-dim); transform: translateY(-2px); box-shadow: 0 8px 28px rgba(245,200,66,0.35); }
+    .btn-start svg { width: 18px; height: 18px; }
+
+    /* ── SCREEN 2: GENERATING ── */
+    #screen-gen {
+      justify-content: center; align-items: center; text-align: center;
+    }
+    .gen-inner { max-width: 600px; width: 100%; }
+
+    .gen-header { margin-bottom: 32px; animation: fadeUp 0.5s ease both; }
+    .gen-header h2 {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(1.5rem, 3vw, 2rem); font-weight: 900; margin-bottom: 8px;
+    }
+    .gen-header h2 em { font-style: normal; color: var(--gold); }
+    .gen-header p { color: var(--slate); font-size: 0.88rem; }
+
+    /* AI typewriter output */
+    .gen-stream-box {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 16px;
+      padding: 20px 24px;
+      text-align: left;
+      min-height: 120px;
+      font-size: 0.82rem;
+      color: rgba(255,255,255,0.6);
+      line-height: 1.7;
+      font-family: 'DM Mono', monospace;
+      overflow: hidden;
+      position: relative;
+      animation: fadeUp 0.5s 0.1s ease both;
+    }
+    .gen-stream-text { word-break: break-all; }
+    .cursor-blink {
+      display: inline-block; width: 2px; height: 14px;
+      background: var(--gold); margin-left: 2px;
+      animation: blink 0.8s infinite; vertical-align: middle;
+    }
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
+
+    .gen-progress {
+      margin-top: 20px;
+      animation: fadeUp 0.5s 0.2s ease both;
+    }
+    .gen-progress-bar {
+      height: 4px; background: rgba(255,255,255,0.08); border-radius: 100px; overflow: hidden;
+    }
+    .gen-progress-fill {
+      height: 100%; width: 0%;
+      background: linear-gradient(90deg, var(--gold-dim), var(--gold));
+      border-radius: 100px;
+      transition: width 0.4s ease;
+    }
+    .gen-progress-label {
+      margin-top: 8px; font-size: 0.78rem; color: var(--slate); text-align: right;
+    }
+
+    /* ── SCREEN 3: QUIZ ── */
+    #screen-quiz { align-items: stretch; max-width: 780px; margin: 0 auto; width: 100%; }
+
+    .quiz-topbar {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 28px; padding-bottom: 16px;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+      animation: fadeUp 0.5s ease both;
+      flex-wrap: wrap; gap: 10px;
+    }
+    .quiz-course-tag {
+      display: flex; align-items: center; gap: 8px;
+      background: rgba(245,200,66,0.1); border: 1px solid rgba(245,200,66,0.25);
+      border-radius: 100px; padding: 6px 14px;
+      font-size: 0.78rem; font-weight: 600; color: var(--gold);
+    }
+    .quiz-course-tag svg { width: 13px; height: 13px; }
+    .quiz-meta { font-size: 0.82rem; color: var(--slate); }
+
+    /* Question cards */
+    .questions-list {
+      display: flex; flex-direction: column; gap: 20px;
+    }
+
+    .q-card {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 18px; padding: 24px;
+      opacity: 0; transform: translateY(16px);
+      transition: opacity 0.4s ease, transform 0.4s ease, border-color 0.2s;
+    }
+    .q-card.visible { opacity: 1; transform: none; }
+    .q-card.answered { border-color: rgba(255,255,255,0.15); }
+
+    .q-top {
+      display: flex; align-items: flex-start; gap: 12px; margin-bottom: 16px;
+    }
+    .q-num {
+      flex-shrink: 0; width: 28px; height: 28px;
+      background: rgba(245,200,66,0.12); border: 1px solid rgba(245,200,66,0.25);
+      border-radius: 8px; display: flex; align-items: center; justify-content: center;
+      font-size: 0.75rem; font-weight: 700; color: var(--gold);
+    }
+    .q-subject {
+      font-size: 0.72rem; font-weight: 600; letter-spacing: 0.07em;
+      text-transform: uppercase; color: var(--slate); margin-bottom: 4px;
+    }
+    .q-text { font-size: 0.95rem; line-height: 1.6; color: rgba(255,255,255,0.9); font-weight: 500; }
+
+    .q-choices { display: flex; flex-direction: column; gap: 8px; }
+    .choice-btn {
+      width: 100%; text-align: left;
+      padding: 12px 16px;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 10px;
+      color: rgba(255,255,255,0.75);
+      font-family: 'DM Sans', sans-serif; font-size: 0.88rem;
+      cursor: pointer; transition: all 0.15s;
+    }
+    .choice-btn:hover:not(:disabled) {
+      background: rgba(245,200,66,0.08);
+      border-color: rgba(245,200,66,0.3);
+      color: var(--white);
+    }
+    .choice-btn.selected {
+      background: rgba(245,200,66,0.12);
+      border-color: rgba(245,200,66,0.5);
+      color: var(--gold);
+    }
+    .choice-btn:disabled { cursor: default; }
+
+    /* Submit bar */
+    .submit-bar {
+      margin-top: 32px; padding-top: 24px;
+      border-top: 1px solid rgba(255,255,255,0.08);
+      display: flex; align-items: center; justify-content: space-between;
+      flex-wrap: wrap; gap: 14px;
+      animation: fadeUp 0.5s ease both;
+    }
+    .answered-count { font-size: 0.85rem; color: var(--slate); }
+    .answered-count span { color: var(--gold); font-weight: 600; }
+    .btn-submit {
+      background: var(--gold); color: var(--navy);
+      font-family: 'DM Sans', sans-serif; font-size: 0.95rem; font-weight: 700;
+      padding: 13px 32px; border: none; border-radius: var(--radius);
+      cursor: pointer; display: flex; align-items: center; gap: 8px;
+      transition: background 0.2s, transform 0.15s, box-shadow 0.2s, opacity 0.2s;
+      box-shadow: 0 4px 20px rgba(245,200,66,0.25);
+      opacity: 0.5; pointer-events: none;
+    }
+    .btn-submit.ready { opacity: 1; pointer-events: all; }
+    .btn-submit.ready:hover { background: var(--gold-dim); transform: translateY(-2px); }
+    .btn-submit svg { width: 17px; height: 17px; }
+
+    /* ── SCREEN 4: RESULTS ── */
+    #screen-results { align-items: center; text-align: center; }
+
+    .results-inner { max-width: 680px; width: 100%; }
+
+    .results-score-wrap {
+      margin-bottom: 32px;
+      animation: fadeUp 0.6s ease both;
+    }
+    .big-ring {
+      width: 140px; height: 140px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 20px; position: relative;
+    }
+    .big-ring::before {
+      content: ''; position: absolute; inset: 0;
+      border-radius: 50%;
+      background: conic-gradient(var(--ring-color, var(--gold)) 0deg var(--ring-deg, 0deg), rgba(255,255,255,0.06) var(--ring-deg, 0deg));
+    }
+    .big-ring::after {
+      content: ''; position: absolute;
+      width: 100px; height: 100px; border-radius: 50%;
+      background: var(--navy);
+    }
+    .big-ring-inner {
+      position: relative; z-index: 1; text-align: center;
+    }
+    .big-ring-pct {
+      font-family: 'Playfair Display', serif;
+      font-size: 2rem; font-weight: 900; color: var(--white); line-height: 1;
+    }
+    .big-ring-label { font-size: 0.7rem; color: var(--slate); margin-top: 2px; }
+
+    .results-verdict {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.6rem; font-weight: 900; margin-bottom: 6px;
+    }
+    .results-verdict.pass { color: var(--success); }
+    .results-verdict.fail { color: var(--danger); }
+    .results-sub { font-size: 0.9rem; color: var(--slate); }
+
+    /* Motivational card */
+    .motivation-card {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 18px; padding: 24px 28px;
+      margin: 28px 0; text-align: left;
+      position: relative; overflow: hidden;
+      animation: fadeUp 0.6s 0.15s ease both;
+    }
+    .motivation-card::before {
+      content: '';
+      position: absolute; top: -40px; right: -40px;
+      width: 160px; height: 160px;
+      background: radial-gradient(circle, rgba(245,200,66,0.1), transparent 65%);
+    }
+    .motivation-header {
+      display: flex; align-items: center; gap: 10px; margin-bottom: 12px;
+    }
+    .motivation-header svg { width: 18px; height: 18px; color: var(--gold); }
+    .motivation-header span { font-size: 0.75rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--gold); }
+    .motivation-text {
+      font-size: 0.95rem; line-height: 1.75; color: rgba(255,255,255,0.85);
+      font-style: italic;
+    }
+    .motivation-cursor {
+      display: inline-block; width: 2px; height: 14px;
+      background: var(--gold); margin-left: 2px;
+      animation: blink 0.8s infinite; vertical-align: middle;
+    }
+
+    /* Topic breakdown */
+    .breakdown {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 18px; padding: 24px;
+      text-align: left;
+      animation: fadeUp 0.6s 0.2s ease both;
+      margin-bottom: 28px;
+    }
+    .breakdown h4 {
+      font-size: 0.75rem; font-weight: 700; letter-spacing: 0.09em;
+      text-transform: uppercase; color: var(--slate); margin-bottom: 16px;
+    }
+    .breakdown-list { display: flex; flex-direction: column; gap: 10px; }
+    .breakdown-row {
+      display: flex; align-items: center; gap: 12px;
+    }
+    .breakdown-subject { font-size: 0.82rem; color: rgba(255,255,255,0.7); flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .breakdown-bar-wrap { flex: 2; height: 6px; background: rgba(255,255,255,0.07); border-radius: 100px; overflow: hidden; }
+    .breakdown-bar-fill { height: 100%; border-radius: 100px; transition: width 1s ease; }
+    .breakdown-pct { font-size: 0.78rem; font-weight: 600; width: 36px; text-align: right; }
+
+    /* Results actions */
+    .results-actions {
+      display: flex; gap: 12px; flex-wrap: wrap; justify-content: center;
+      animation: fadeUp 0.6s 0.25s ease both;
+    }
+    .btn-primary {
+      background: var(--gold); color: var(--navy);
+      font-family: 'DM Sans', sans-serif; font-size: 0.95rem; font-weight: 700;
+      padding: 13px 28px; border: none; border-radius: var(--radius);
+      cursor: pointer; text-decoration: none;
+      display: inline-flex; align-items: center; gap: 8px;
+      transition: background 0.2s, transform 0.15s;
+      box-shadow: 0 4px 20px rgba(245,200,66,0.25);
+    }
+    .btn-primary:hover { background: var(--gold-dim); transform: translateY(-2px); }
+    .btn-primary svg { width: 17px; height: 17px; }
+    .btn-outline {
+      background: transparent; color: var(--white);
+      font-family: 'DM Sans', sans-serif; font-size: 0.95rem; font-weight: 600;
+      padding: 13px 28px; border: 1.5px solid rgba(255,255,255,0.2); border-radius: var(--radius);
+      cursor: pointer; text-decoration: none;
+      display: inline-flex; align-items: center; gap: 8px;
+      transition: border-color 0.2s, color 0.2s, transform 0.15s;
+    }
+    .btn-outline:hover { border-color: var(--gold); color: var(--gold); transform: translateY(-2px); }
+    .btn-outline svg { width: 17px; height: 17px; }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    @media (max-width: 600px) {
+      .course-grid { grid-template-columns: 1fr 1fr; }
+      .qcount-opts { flex-wrap: wrap; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <a href="index.html" class="nav-logo">
+    <div class="logo-icon"><i data-lucide="graduation-cap"></i></div>
+    <span>Course<b>Ready</b></span>
+  </a>
+  <a href="dashboard.html" class="nav-back">
+    <i data-lucide="arrow-left"></i> Dashboard
+  </a>
+</nav>
+
+<!-- ── SCREEN 1: COURSE PICKER ── -->
+<div class="screen active" id="screen-pick">
+  <div class="pick-header">
+    <div class="label">Step 1 of 2</div>
+    <h1>Pick Your <em>Course</em></h1>
+    <p>Search and select the course you're entering this coming school year.</p>
+  </div>
+
+  <div class="pick-box">
+    <div class="search-wrap">
+      <i data-lucide="search"></i>
+      <input type="text" id="course-search" placeholder="Search courses e.g. BS Nursing, BS IT…" autocomplete="off" />
+    </div>
+
+    <div class="course-grid" id="course-grid"></div>
+
+    <div class="pick-controls" id="pick-controls">
+      <div class="selected-course-label">
+        <i data-lucide="book-open"></i>
+        <span>Selected: <strong id="selected-course-name">—</strong></span>
+      </div>
+      <div class="qcount-row">
+        <span class="qcount-label">How many questions?</span>
+        <div class="qcount-opts">
+          <button class="qcount-btn" data-n="5">5</button>
+          <button class="qcount-btn active" data-n="10">10</button>
+          <button class="qcount-btn" data-n="15">15</button>
+          <button class="qcount-btn" data-n="20">20</button>
+        </div>
+      </div>
+      <button class="btn-start" id="btn-start">
+        Generate My Quiz <i data-lucide="sparkles"></i>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ── SCREEN 2: GENERATING ── -->
+<div class="screen" id="screen-gen">
+  <div class="gen-inner">
+    <div class="gen-header">
+      <h2>Generating Your <em id="gen-course-name">Quiz</em>…</h2>
+      <p>Our AI is writing fresh questions based on the CHED curriculum. Hold tight!</p>
+    </div>
+    <div class="gen-stream-box">
+      <div class="gen-stream-text" id="gen-stream-text"></div>
+      <span class="cursor-blink"></span>
+    </div>
+    <div class="gen-progress">
+      <div class="gen-progress-bar">
+        <div class="gen-progress-fill" id="gen-progress-fill"></div>
+      </div>
+      <div class="gen-progress-label" id="gen-progress-label">Starting…</div>
+    </div>
+  </div>
+</div>
+
+<!-- ── SCREEN 3: QUIZ ── -->
+<div class="screen" id="screen-quiz">
+  <div class="quiz-topbar">
+    <div class="quiz-course-tag">
+      <i data-lucide="graduation-cap"></i>
+      <span id="quiz-course-label">—</span>
+    </div>
+    <div class="quiz-meta" id="quiz-meta">0 questions</div>
+  </div>
+  <div class="questions-list" id="questions-list"></div>
+  <div class="submit-bar">
+    <div class="answered-count">Answered: <span id="answered-count">0</span> / <span id="total-count">0</span></div>
+    <button class="btn-submit" id="btn-submit">
+      Submit Quiz <i data-lucide="send"></i>
+    </button>
+  </div>
+</div>
+
+<!-- ── SCREEN 4: RESULTS ── -->
+<div class="screen" id="screen-results">
+  <div class="results-inner">
+    <div class="results-score-wrap">
+      <div class="big-ring" id="big-ring">
+        <div class="big-ring-inner">
+          <div class="big-ring-pct" id="result-pct">0%</div>
+          <div class="big-ring-label" id="result-score-label">0 / 0</div>
+        </div>
+      </div>
+      <div class="results-verdict" id="results-verdict">—</div>
+      <div class="results-sub" id="results-sub">—</div>
+    </div>
+
+    <!-- Motivational message -->
+    <div class="motivation-card">
+      <div class="motivation-header">
+        <i data-lucide="sparkles"></i>
+        <span>AI Feedback</span>
+      </div>
+      <div class="motivation-text" id="motivation-text">
+        <span class="motivation-cursor"></span>
+      </div>
+    </div>
+
+    <!-- Topic breakdown -->
+    <div class="breakdown">
+      <h4>Topic Breakdown</h4>
+      <div class="breakdown-list" id="breakdown-list"></div>
+    </div>
+
+    <div class="results-actions">
+      <button class="btn-primary" onclick="retakeQuiz()">
+        <i data-lucide="refresh-cw"></i> Retake Quiz
+      </button>
+      <a href="dashboard.html" class="btn-outline">
+        <i data-lucide="layout-dashboard"></i> Dashboard
+      </a>
+    </div>
+  </div>
+</div>
+
+<script>
+  // ── Data ──
+  const COURSES = [
+    "BS Nursing","BS Information Technology","BS Accountancy","BS Psychology",
+    "BS Education","BS Architecture","BS Civil Engineering","BS Computer Science",
+    "BS Business Administration","AB Communication","BS Criminology","BS Pharmacy",
+    "BS Physical Therapy","BS Nutrition & Dietetics","BS Hotel & Restaurant Management",
+    "BS Tourism Management","BS Social Work","BS Biology","BS Medical Technology",
+    "AB Political Science","BS Electrical Engineering","BS Industrial Engineering",
+    "BS Agricultural Engineering","AB English","BS Environmental Science",
+    "BS Marine Biology","BS Dentistry","BS Radiologic Technology",
+    "BS Occupational Therapy","AB Philosophy","BS Mathematics","BS Statistics",
+    "BS Chemistry","BS Physics","BS Geology","BS Forestry","BS Agricultural Science",
+    "BS Food Technology","BS Interior Design","BS Fine Arts",
+    "BS Mechanical Engineering","BS Chemical Engineering","BS Electronics Engineering",
+    "BS Computer Engineering","BS Geodetic Engineering","BS Mining Engineering",
+    "AB Sociology","AB Anthropology","BS Public Health","BS Midwifery",
+  ];
+
+  let selectedCourse = null;
+  let numQuestions = 10;
+  let questions = [];
+  let userAnswers = {};
+
+  // ── Screen management ──
+  function showScreen(id) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  // ── Course picker ──
+  function renderCourses(filter = '') {
+    const grid = document.getElementById('course-grid');
+    const filtered = COURSES.filter(c => c.toLowerCase().includes(filter.toLowerCase()));
+    if (filtered.length === 0) {
+      grid.innerHTML = '<div class="no-results">No courses found. Try a different search.</div>';
+      return;
+    }
+    grid.innerHTML = filtered.map(c => `
+      <button class="course-chip ${selectedCourse === c ? 'selected' : ''}" onclick="selectCourse('${c.replace(/'/g,"\\'")}')">
+        ${c}
+      </button>
+    `).join('');
+  }
+
+  function selectCourse(course) {
+    selectedCourse = course;
+    document.getElementById('selected-course-name').textContent = course;
+    document.getElementById('pick-controls').classList.add('visible');
+    renderCourses(document.getElementById('course-search').value);
+    lucide.createIcons();
+  }
+
+  document.getElementById('course-search').addEventListener('input', e => {
+    renderCourses(e.target.value);
+  });
+
+  document.querySelectorAll('.qcount-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.qcount-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      numQuestions = parseInt(btn.dataset.n);
+    });
+  });
+
+  // ── Generate quiz ──
+  document.getElementById('btn-start').addEventListener('click', async () => {
+    if (!selectedCourse) return;
+    showScreen('screen-gen');
+    document.getElementById('gen-course-name').textContent = selectedCourse;
+    lucide.createIcons();
+    await generateQuiz();
+  });
+
+  async function generateQuiz() {
+    const streamText = document.getElementById('gen-stream-text');
+    const progressFill = document.getElementById('gen-progress-fill');
+    const progressLabel = document.getElementById('gen-progress-label');
+
+    let rawText = '';
+    streamText.textContent = '';
+
+    try {
+      const res = await fetch('/api/quiz', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ course: selectedCourse, numQuestions }),
+      });
+
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || 'Server error');
+      }
+
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = '';
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n');
+        buffer = lines.pop();
+
+        for (const line of lines) {
+          if (!line.startsWith('data: ')) continue;
+          const data = line.slice(6).trim();
+          if (data === '[DONE]') continue;
+          try {
+            const parsed = JSON.parse(data);
+            const token = parsed.choices?.[0]?.delta?.content || '';
+            if (token) {
+              rawText += token;
+              // Show last 300 chars in stream box for typewriter effect
+              streamText.textContent = rawText.slice(-300);
+
+              // Estimate progress by counting [ and { chars as question markers
+              const questionCount = (rawText.match(/"q":/g) || []).length;
+              const pct = Math.min(Math.round((questionCount / numQuestions) * 100), 95);
+              progressFill.style.width = pct + '%';
+              progressLabel.textContent = questionCount > 0
+                ? `Writing question ${questionCount} of ${numQuestions}…`
+                : 'AI is thinking…';
+            }
+          } catch { /* partial chunk, skip */ }
+        }
+      }
+
+      // Parse the completed JSON
+      progressFill.style.width = '100%';
+      progressLabel.textContent = 'Done! Loading your quiz…';
+
+      // Extract JSON array from response (strip any accidental markdown)
+      const jsonMatch = rawText.match(/\[[\s\S]*\]/);
+      if (!jsonMatch) throw new Error('AI returned unexpected format. Please try again.');
+
+      questions = JSON.parse(jsonMatch[0]);
+      if (!Array.isArray(questions) || questions.length === 0) throw new Error('No questions generated.');
+
+      setTimeout(() => renderQuiz(), 600);
+
+    } catch (err) {
+      streamText.textContent = `Error: ${err.message}`;
+      progressLabel.textContent = 'Something went wrong.';
+      // Add retry button
+      setTimeout(() => {
+        const retryBtn = document.createElement('button');
+        retryBtn.textContent = 'Try Again';
+        retryBtn.style.cssText = 'margin-top:16px;background:var(--gold);color:var(--navy);border:none;padding:10px 24px;border-radius:10px;font-weight:700;cursor:pointer;font-family:DM Sans,sans-serif;';
+        retryBtn.onclick = () => showScreen('screen-pick');
+        document.querySelector('.gen-inner').appendChild(retryBtn);
+      }, 500);
+    }
+  }
+
+  // ── Render quiz ──
+  function renderQuiz() {
+    userAnswers = {};
+    const list = document.getElementById('questions-list');
+    list.innerHTML = '';
+
+    document.getElementById('quiz-course-label').textContent = selectedCourse;
+    document.getElementById('quiz-meta').textContent = `${questions.length} questions`;
+    document.getElementById('total-count').textContent = questions.length;
+    document.getElementById('answered-count').textContent = 0;
+
+    questions.forEach((q, i) => {
+      const card = document.createElement('div');
+      card.className = 'q-card';
+      card.id = `q-card-${i}`;
+      card.innerHTML = `
+        <div class="q-top">
+          <div class="q-num">${i + 1}</div>
+          <div>
+            <div class="q-subject">${q.subject || 'General'}</div>
+            <div class="q-text">${q.q}</div>
+          </div>
+        </div>
+        <div class="q-choices">
+          ${q.choices.map((c, ci) => `
+            <button class="choice-btn" data-q="${i}" data-choice="${ci}" onclick="selectAnswer(${i}, ${ci}, '${['A','B','C','D'][ci]}')">
+              ${c}
+            </button>
+          `).join('')}
+        </div>
+      `;
+      list.appendChild(card);
+    });
+
+    showScreen('screen-quiz');
+    lucide.createIcons();
+
+    // Stagger card reveal
+    questions.forEach((_, i) => {
+      setTimeout(() => {
+        const card = document.getElementById(`q-card-${i}`);
+        if (card) card.classList.add('visible');
+      }, i * 80);
+    });
+  }
+
+  function selectAnswer(qIndex, choiceIndex, letter) {
+    userAnswers[qIndex] = letter;
+
+    // Update choice button styles for this question
+    const card = document.getElementById(`q-card-${qIndex}`);
+    card.querySelectorAll('.choice-btn').forEach((btn, i) => {
+      btn.classList.toggle('selected', i === choiceIndex);
+    });
+    card.classList.add('answered');
+
+    // Update answered count
+    const count = Object.keys(userAnswers).length;
+    document.getElementById('answered-count').textContent = count;
+
+    // Enable submit when all answered
+    const submitBtn = document.getElementById('btn-submit');
+    if (count === questions.length) {
+      submitBtn.classList.add('ready');
+    }
+  }
+
+  document.getElementById('btn-submit').addEventListener('click', () => {
+    if (Object.keys(userAnswers).length < questions.length) return;
+    calculateResults();
+  });
+
+  // ── Calculate & show results ──
+  function calculateResults() {
+    let correct = 0;
+    const topicMap = {};
+
+    questions.forEach((q, i) => {
+      const subject = q.subject || 'General';
+      if (!topicMap[subject]) topicMap[subject] = { correct: 0, total: 0 };
+      topicMap[subject].total++;
+      if (userAnswers[i] === q.answer) {
+        correct++;
+        topicMap[subject].correct++;
+      }
+    });
+
+    const pct = Math.round((correct / questions.length) * 100);
+    const passed = pct >= 50;
+
+    // Ring
+    const ring = document.getElementById('big-ring');
+    const deg = Math.round((pct / 100) * 360);
+    const ringColor = pct >= 75 ? '#4ade80' : pct >= 50 ? '#f5c842' : '#f87171';
+    ring.style.setProperty('--ring-color', ringColor);
+    ring.style.setProperty('--ring-deg', deg + 'deg');
+
+    document.getElementById('result-pct').textContent = pct + '%';
+    document.getElementById('result-score-label').textContent = `${correct} / ${questions.length}`;
+
+    const verdict = document.getElementById('results-verdict');
+    const sub = document.getElementById('results-sub');
+
+    if (pct >= 75) {
+      verdict.textContent = '🎉 College Ready!';
+      verdict.className = 'results-verdict pass';
+      sub.textContent = `You scored ${pct}% — you're well prepared for ${selectedCourse}.`;
+    } else if (pct >= 50) {
+      verdict.textContent = '✅ Passed!';
+      verdict.className = 'results-verdict pass';
+      sub.textContent = `You scored ${pct}% — passing mark reached. Keep reviewing!`;
+    } else {
+      verdict.textContent = '📚 Keep Studying';
+      verdict.className = 'results-verdict fail';
+      sub.textContent = `You scored ${pct}% — below passing. Don't give up, you've got this!`;
+    }
+
+    // Topic breakdown
+    const breakdownList = document.getElementById('breakdown-list');
+    breakdownList.innerHTML = Object.entries(topicMap).map(([subject, data]) => {
+      const subPct = Math.round((data.correct / data.total) * 100);
+      const barColor = subPct >= 75 ? '#4ade80' : subPct >= 50 ? '#f5c842' : '#f87171';
+      return `
+        <div class="breakdown-row">
+          <div class="breakdown-subject">${subject}</div>
+          <div class="breakdown-bar-wrap">
+            <div class="breakdown-bar-fill" style="width:0%;background:${barColor}" data-pct="${subPct}"></div>
+          </div>
+          <div class="breakdown-pct" style="color:${barColor}">${subPct}%</div>
+        </div>
+      `;
+    }).join('');
+
+    showScreen('screen-results');
+    lucide.createIcons();
+
+    // Animate breakdown bars
+    setTimeout(() => {
+      document.querySelectorAll('.breakdown-bar-fill').forEach(bar => {
+        bar.style.width = bar.dataset.pct + '%';
+      });
+    }, 300);
+
+    // Stream motivational message from Groq
+    streamMotivation(pct, correct, questions.length, selectedCourse, topicMap);
+  }
+
+  // ── Stream motivational message ──
+  async function streamMotivation(pct, correct, total, course, topicMap) {
+    const weakTopics = Object.entries(topicMap)
+      .filter(([, d]) => (d.correct / d.total) < 0.5)
+      .map(([s]) => s).join(', ') || 'none';
+    const strongTopics = Object.entries(topicMap)
+      .filter(([, d]) => (d.correct / d.total) >= 0.75)
+      .map(([s]) => s).join(', ') || 'none';
+
+    const tier = pct >= 85 ? 'exceptional' : pct >= 75 ? 'great' : pct >= 50 ? 'passing' : pct >= 30 ? 'low' : 'very_low';
+
+    const promptMap = {
+      exceptional: `The student got ${pct}% (${correct}/${total}) on a ${course} readiness quiz. Strong topics: ${strongTopics}. Write a SHORT (3-4 sentences) wildly enthusiastic and creative motivational message. Compare them to a legendary genius in ${course} (like Mozart but for ${course} specifically — pick a real famous figure in that field). Be playful, poetic, and inspiring. Make them feel like a future legend.`,
+      great: `The student got ${pct}% (${correct}/${total}) on a ${course} readiness quiz. Strong topics: ${strongTopics}. Weak: ${weakTopics}. Write a SHORT (3-4 sentences) warm and encouraging message. Say they have the makings of a great ${course} professional. Be specific to the course. Keep it motivating and forward-looking.`,
+      passing: `The student got ${pct}% (${correct}/${total}) on a ${course} readiness quiz. They passed but have room to grow. Weak topics: ${weakTopics}. Write a SHORT (3-4 sentences) honest but encouraging message. Acknowledge the pass, mention what to review, and keep the tone upbeat and course-specific.`,
+      low: `The student got ${pct}% (${correct}/${total}) on a ${course} readiness quiz. They didn't pass. Weak topics: ${weakTopics}. Write a SHORT (3-4 sentences) genuinely warm and empathetic message. Don't sugarcoat but be deeply encouraging. Tell them every great ${course} professional started somewhere and that this is just the beginning. Make them want to try again.`,
+      very_low: `The student got ${pct}% (${correct}/${total}) on a ${course} readiness quiz — a very low score. Write a SHORT (3-4 sentences) deeply human and funny-but-kind message. Acknowledge it honestly but with warmth and humor. Tell them this just means there's so much exciting stuff to learn. End with a fire-emoji level hype line that makes them want to study.`,
+    };
+
+    const motivationEl = document.getElementById('motivation-text');
+    motivationEl.innerHTML = '<span class="motivation-cursor"></span>';
+    let motivationText = '';
+
+    try {
+      const res = await fetch('/api/quiz', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ motivation: true, prompt: promptMap[tier] }),
+      });
+
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = '';
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n');
+        buffer = lines.pop();
+        for (const line of lines) {
+          if (!line.startsWith('data: ')) continue;
+          const data = line.slice(6).trim();
+          if (data === '[DONE]') continue;
+          try {
+            const parsed = JSON.parse(data);
+            const token = parsed.choices?.[0]?.delta?.content || '';
+            if (token) {
+              motivationText += token;
+              motivationEl.innerHTML = motivationText + '<span class="motivation-cursor"></span>';
+            }
+          } catch { /* skip */ }
+        }
+      }
+      // Remove cursor at end
+      motivationEl.innerHTML = motivationText;
+    } catch {
+      motivationEl.innerHTML = pct >= 50
+        ? "You've shown real promise today. Keep that momentum going — every great student started exactly where you are right now."
+        : "Every expert was once a beginner. This quiz is just your starting line, not your finish. Come back swinging — you've got everything it takes.";
+    }
+  }
+
+  // ── Retake ──
+  function retakeQuiz() {
+    questions = [];
+    userAnswers = {};
+    selectedCourse = null;
+    document.getElementById('pick-controls').classList.remove('visible');
+    document.getElementById('course-search').value = '';
+    renderCourses();
+    showScreen('screen-pick');
+    lucide.createIcons();
+  }
+
+  // ── Init ──
+  renderCourses();
+  lucide.createIcons();
+</script>
+</body>
+</html>
