@@ -528,13 +528,12 @@
         <span>Selected: <strong id="selected-course-name">—</strong></span>
       </div>
       <div class="qcount-row">
-        <span class="qcount-label">How many questions?</span>
-        <div class="qcount-opts">
-          <button class="qcount-btn" data-n="5">5</button>
-          <button class="qcount-btn active" data-n="10">10</button>
-          <button class="qcount-btn" data-n="15">15</button>
-          <button class="qcount-btn" data-n="20">20</button>
-        </div>
+        <span class="qcount-label">How many questions? <strong id="qcount-display" style="color:var(--gold)">10</strong></span>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px;">
+        <span style="font-size:0.75rem;color:var(--slate)">1</span>
+        <input type="range" id="qcount-slider" min="1" max="100" value="10" style="flex:1;accent-color:var(--gold);cursor:pointer;" />
+        <span style="font-size:0.75rem;color:var(--slate)">100</span>
       </div>
       <button class="btn-start" id="btn-start">
         Generate My Quiz <i data-lucide="sparkles"></i>
@@ -681,12 +680,9 @@
     renderCourses(e.target.value);
   });
 
-  document.querySelectorAll('.qcount-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      document.querySelectorAll('.qcount-btn').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      numQuestions = parseInt(btn.dataset.n);
-    });
+  document.getElementById('qcount-slider').addEventListener('input', e => {
+    numQuestions = parseInt(e.target.value);
+    document.getElementById('qcount-display').textContent = numQuestions;
   });
 
   // ── Generate quiz ──
@@ -853,6 +849,73 @@
     calculateResults();
   });
 
+  // ── Save result to localStorage & update user stats ──
+  function saveQuizResult(pct, correct, total, course, topicMap) {
+    // Build strength/weakness list
+    const topics = Object.entries(topicMap).map(([subject, d]) => ({
+      subject,
+      correct: d.correct,
+      total: d.total,
+      pct: Math.round((d.correct / d.total) * 100),
+    }));
+    const strengths = topics.filter(t => t.pct >= 70).map(t => t.subject);
+    const weaknesses = topics.filter(t => t.pct < 50).map(t => t.subject);
+
+    const result = {
+      id: Date.now(),
+      course,
+      score: correct,
+      total,
+      pct,
+      passed: pct >= 50,
+      date: new Date().toISOString(),
+      topics,
+      strengths,
+      weaknesses,
+    };
+
+    // Save to quiz history
+    const history = JSON.parse(localStorage.getItem('cr_quiz_history') || '[]');
+    history.unshift(result); // newest first
+    localStorage.setItem('cr_quiz_history', JSON.stringify(history.slice(0, 50))); // keep last 50
+
+    // Update user session stats
+    try {
+      const match = document.cookie.match(/(?:^|;\s*)cr_user=([^;]+)/);
+      if (!match) return;
+      const user = JSON.parse(atob(match[1]));
+
+      // XP: 10 per correct answer, bonus 50 if passed
+      const xpEarned = (correct * 10) + (pct >= 50 ? 50 : 0);
+      user.xp = (user.xp || 0) + xpEarned;
+      user.quizzesDone = (user.quizzesDone || 0) + 1;
+
+      // Streak: check if last quiz was today or yesterday
+      const lastQuizDate = user.lastQuizDate ? new Date(user.lastQuizDate) : null;
+      const today = new Date();
+      const yesterday = new Date(today); yesterday.setDate(today.getDate() - 1);
+      const isToday = lastQuizDate && lastQuizDate.toDateString() === today.toDateString();
+      const isYesterday = lastQuizDate && lastQuizDate.toDateString() === yesterday.toDateString();
+      if (!lastQuizDate || isYesterday) {
+        user.streak = (user.streak || 0) + 1;
+      } else if (!isToday) {
+        user.streak = 1; // reset streak
+      }
+      user.lastQuizDate = today.toISOString();
+
+      // Badges
+      const badges = user.badges || [];
+      if (!badges.includes('first_quiz') && user.quizzesDone >= 1) badges.push('first_quiz');
+      if (!badges.includes('perfect_score') && pct === 100) badges.push('perfect_score');
+      if (!badges.includes('streak_5') && user.streak >= 5) badges.push('streak_5');
+      user.badges = badges;
+
+      // Re-encode and set cookie (7 days)
+      const encoded = btoa(JSON.stringify(user));
+      document.cookie = `cr_user=${encoded}; Path=/; SameSite=Lax; Max-Age=${60*60*24*7}`;
+    } catch(e) { console.warn('Could not update user stats', e); }
+  }
+
   // ── Calculate & show results ──
   function calculateResults() {
     let correct = 0;
@@ -923,6 +986,9 @@
         bar.style.width = bar.dataset.pct + '%';
       });
     }, 300);
+
+    // Save result + update user stats
+    saveQuizResult(pct, correct, questions.length, selectedCourse, topicMap);
 
     // Stream motivational message from Groq
     streamMotivation(pct, correct, questions.length, selectedCourse, topicMap);
