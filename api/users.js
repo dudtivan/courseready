@@ -75,11 +75,17 @@ export default async function handler(req, res) {
     const session = parseSession(req);
     if (!session) return res.status(401).json({ error: 'Not logged in' });
 
+    // ── Parse body: Node runtime doesn't have req.json() — read the stream manually ──
     let body = {};
-    try { body = await req.json(); } catch { /* body is optional */ }
+    try {
+      const chunks = [];
+      for await (const chunk of req) chunks.push(chunk);
+      const raw = Buffer.concat(chunks).toString('utf8');
+      if (raw) body = JSON.parse(raw);
+    } catch { /* body is optional */ }
 
     const record = {
-      google_id:          session.id,
+      google_id:          session.id    || session.sub || session.email, // fallback if id missing
       name:               session.name    || 'Student',
       email:              session.email,
       picture:            session.picture || '',
@@ -96,7 +102,7 @@ export default async function handler(req, res) {
 
     try {
       // ON CONFLICT (email) → update everything except first_seen
-      const result = await supabase('/cr_users', 'POST', record);
+      const result = await supabase('/cr_users?on_conflict=email', 'POST', record);
       return res.status(200).json(result);
     } catch (e) {
       return res.status(500).json({ error: e.message });
