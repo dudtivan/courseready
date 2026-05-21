@@ -584,23 +584,12 @@
     return info;
   }
 
-  // ── Session: read from URL hash (fresh login) or localStorage (returning) ──
+  // ── Session: check cookie (set by callback.js) ──
   function getSession() {
-    // 1. Check URL hash for fresh login: #session=base64...
-    const hash = window.location.hash;
-    if (hash.startsWith('#session=')) {
-      try {
-        const encoded = hash.slice('#session='.length);
-        const user = JSON.parse(atob(encoded));
-        localStorage.setItem('cr_user', JSON.stringify(user));
-        history.replaceState(null, '', window.location.pathname);
-        return user;
-      } catch { /* fall through */ }
-    }
-    // 2. Fall back to localStorage for returning users
     try {
-      const stored = localStorage.getItem('cr_user');
-      return stored ? JSON.parse(stored) : null;
+      const match = document.cookie.match(/(?:^|;\s*)cr_user=([^;]+)/);
+      if (!match) return null;
+      return JSON.parse(atob(match[1]));
     } catch { return null; }
   }
 
@@ -704,7 +693,7 @@
   }
 
   function logout() {
-    localStorage.removeItem('cr_user');
+    document.cookie = 'cr_user=; Max-Age=0; Path=/; SameSite=Lax';
     window.location.href = '/login.html';
   }
 
