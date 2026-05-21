@@ -561,6 +561,14 @@
         </div>
       </div>
 
+      <!-- Strengths & Weaknesses -->
+      <div class="card sw-card" id="sw-card" style="display:none">
+        <div class="card-header">
+          <h3><i data-lucide="bar-chart-2"></i> Your Performance</h3>
+        </div>
+        <div class="card-body" id="sw-body"></div>
+      </div>
+
     </div>
   </div>
 </main>
@@ -660,13 +668,111 @@
     }).join('');
   }
 
+  // ── Render past quizzes ──
+  function renderQuizHistory() {
+    const history = JSON.parse(localStorage.getItem('cr_quiz_history') || '[]');
+    const emptyEl = document.getElementById('empty-quizzes');
+    const historyEl = document.getElementById('quiz-history');
+
+    if (history.length === 0) {
+      emptyEl.style.display = 'flex';
+      historyEl.innerHTML = '';
+      return;
+    }
+
+    emptyEl.style.display = 'none';
+    historyEl.innerHTML = history.map(r => {
+      const date = new Date(r.date).toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric' });
+      const color = r.pct >= 75 ? '#4ade80' : r.pct >= 50 ? '#f5c842' : '#f87171';
+      const deg = Math.round((r.pct / 100) * 360);
+      return `
+        <div style="display:flex;align-items:center;gap:16px;padding:14px 0;border-bottom:1px solid rgba(11,31,74,0.07);">
+          <div style="flex-shrink:0;width:48px;height:48px;border-radius:50%;
+            background:conic-gradient(${color} 0deg ${deg}deg, rgba(11,31,74,0.08) ${deg}deg);
+            display:flex;align-items:center;justify-content:center;position:relative;">
+            <div style="position:absolute;width:34px;height:34px;border-radius:50%;background:#fff;"></div>
+            <span style="position:relative;z-index:1;font-size:0.7rem;font-weight:700;color:${color}">${r.pct}%</span>
+          </div>
+          <div style="flex:1;min-width:0;">
+            <div style="font-size:0.88rem;font-weight:600;color:var(--navy);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${r.course}</div>
+            <div style="font-size:0.75rem;color:var(--slate);margin-top:2px">${r.score}/${r.total} correct · ${date}</div>
+          </div>
+          <div style="flex-shrink:0;font-size:0.75rem;font-weight:700;padding:4px 10px;border-radius:100px;
+            background:${r.passed ? 'rgba(74,222,128,0.1)' : 'rgba(248,113,113,0.1)'};
+            color:${r.passed ? '#4ade80' : '#f87171'};">
+            ${r.passed ? 'Passed' : 'Failed'}
+          </div>
+        </div>`;
+    }).join('');
+  }
+
+  // ── Render strengths & weaknesses ──
+  function renderStrengthsWeaknesses() {
+    const history = JSON.parse(localStorage.getItem('cr_quiz_history') || '[]');
+    if (history.length === 0) return;
+
+    const swCard = document.getElementById('sw-card');
+    const swBody = document.getElementById('sw-body');
+    swCard.style.display = 'block';
+
+    // Aggregate all topic scores across all quizzes
+    const topicMap = {};
+    history.forEach(r => {
+      (r.topics || []).forEach(t => {
+        if (!topicMap[t.subject]) topicMap[t.subject] = { correct: 0, total: 0 };
+        topicMap[t.subject].correct += t.correct;
+        topicMap[t.subject].total += t.total;
+      });
+    });
+
+    const topics = Object.entries(topicMap)
+      .map(([subject, d]) => ({ subject, pct: Math.round((d.correct / d.total) * 100) }))
+      .sort((a, b) => b.pct - a.pct);
+
+    const strengths = topics.filter(t => t.pct >= 70).slice(0, 4);
+    const weaknesses = topics.filter(t => t.pct < 50).slice(0, 4);
+
+    swBody.innerHTML = `
+      ${strengths.length > 0 ? `
+        <div style="margin-bottom:16px;">
+          <div style="font-size:0.72rem;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:#4ade80;margin-bottom:10px;display:flex;align-items:center;gap:6px;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+            Strengths
+          </div>
+          ${strengths.map(t => `
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+              <div style="font-size:0.82rem;color:var(--text);flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${t.subject}</div>
+              <div style="flex:1;height:6px;background:rgba(11,31,74,0.08);border-radius:100px;overflow:hidden;">
+                <div style="height:100%;width:${t.pct}%;background:#4ade80;border-radius:100px;"></div>
+              </div>
+              <div style="font-size:0.75rem;font-weight:600;color:#4ade80;width:34px;text-align:right">${t.pct}%</div>
+            </div>`).join('')}
+        </div>` : ''}
+      ${weaknesses.length > 0 ? `
+        <div>
+          <div style="font-size:0.72rem;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:#f87171;margin-bottom:10px;display:flex;align-items:center;gap:6px;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            Needs Review
+          </div>
+          ${weaknesses.map(t => `
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+              <div style="font-size:0.82rem;color:var(--text);flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${t.subject}</div>
+              <div style="flex:1;height:6px;background:rgba(11,31,74,0.08);border-radius:100px;overflow:hidden;">
+                <div style="height:100%;width:${t.pct}%;background:#f87171;border-radius:100px;"></div>
+              </div>
+              <div style="font-size:0.75rem;font-weight:600;color:#f87171;width:34px;text-align:right">${t.pct}%</div>
+            </div>`).join('')}
+        </div>` : ''}
+      ${strengths.length === 0 && weaknesses.length === 0 ? '<p style="font-size:0.85rem;color:var(--slate);text-align:center;padding:16px 0">Take more quizzes to see your performance breakdown.</p>' : ''}
+    `;
+  }
+
   // ── Auth guard ──
   function init() {
     const user = getSession();
     const overlay = document.getElementById('auth-loading');
 
     if (!user) {
-      // Show not-logged-in screen instead of redirecting
       overlay.innerHTML = `
         <div style="text-align:center;padding:24px;max-width:360px;">
           <div style="width:64px;height:64px;background:rgba(245,200,66,0.1);border:1px solid rgba(245,200,66,0.3);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 20px;">
@@ -683,12 +789,11 @@
     }
 
     populateDashboard(user);
+    renderQuizHistory();
+    renderStrengthsWeaknesses();
 
-    // Hide loading overlay
     overlay.classList.add('hidden');
     setTimeout(() => overlay.remove(), 500);
-
-    // Init Lucide icons
     lucide.createIcons();
   }
 
