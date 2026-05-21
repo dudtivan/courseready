@@ -90,8 +90,8 @@ export default async function handler(req, res) {
     `cr_user=${cookieValue}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=${60 * 60 * 24 * 7}`
   );
 
-  // ── STEP 7: Redirect to quiz ──
-  return res.redirect(302, '/quiz.html');
+  // ── STEP 7: Redirect to dashboard ──
+  return res.redirect(302, '/dashboard.html');
 }
 
 /*

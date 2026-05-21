@@ -1,0 +1,685 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CourseReady — Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --navy:      #0b1f4a;
+      --navy-mid:  #122860;
+      --navy-light:#1a3470;
+      --gold:      #f5c842;
+      --gold-dim:  #c9a82c;
+      --cream:     #fdf8ee;
+      --white:     #ffffff;
+      --slate:     #8898bb;
+      --text:      #1a2e5a;
+      --radius:    14px;
+      --success:   #4ade80;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--cream);
+      color: var(--text);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    body::before {
+      content: '';
+      position: fixed; inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
+      pointer-events: none; z-index: 0;
+    }
+
+    /* ── NAV ── */
+    nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 16px 6vw;
+      background: rgba(11,31,74,0.95);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid rgba(245,200,66,0.15);
+    }
+
+    .nav-logo {
+      display: flex; align-items: center; gap: 10px; text-decoration: none;
+    }
+    .nav-logo .logo-icon {
+      width: 36px; height: 36px; background: var(--gold);
+      border-radius: 8px; display: flex; align-items: center; justify-content: center;
+      color: var(--navy);
+    }
+    .nav-logo .logo-icon svg { width: 20px; height: 20px; }
+    .nav-logo span {
+      font-family: 'Playfair Display', serif; font-size: 1.2rem; color: var(--white);
+    }
+    .nav-logo span b { color: var(--gold); }
+
+    .nav-right {
+      display: flex; align-items: center; gap: 16px;
+    }
+
+    .nav-user {
+      display: flex; align-items: center; gap: 10px;
+    }
+    .nav-avatar {
+      width: 36px; height: 36px; border-radius: 50%;
+      border: 2px solid rgba(245,200,66,0.4);
+      object-fit: cover;
+      background: var(--navy-light);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.85rem; font-weight: 600; color: var(--gold);
+      overflow: hidden;
+    }
+    .nav-avatar img { width: 100%; height: 100%; object-fit: cover; }
+    .nav-name { font-size: 0.88rem; font-weight: 500; color: rgba(255,255,255,0.85); }
+
+    .btn-logout {
+      display: flex; align-items: center; gap: 6px;
+      background: rgba(255,255,255,0.07);
+      border: 1px solid rgba(255,255,255,0.12);
+      color: rgba(255,255,255,0.65);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.82rem; font-weight: 500;
+      padding: 7px 14px; border-radius: 8px;
+      cursor: pointer; text-decoration: none;
+      transition: background 0.2s, color 0.2s;
+    }
+    .btn-logout:hover { background: rgba(255,107,107,0.12); color: #ff9999; border-color: rgba(255,107,107,0.2); }
+    .btn-logout svg { width: 14px; height: 14px; }
+
+    /* ── MAIN LAYOUT ── */
+    .dashboard {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 100px 6vw 60px;
+      position: relative; z-index: 1;
+    }
+
+    .dash-greeting {
+      margin-bottom: 32px;
+      animation: fadeUp 0.6s ease both;
+    }
+    .dash-greeting .label {
+      font-size: 0.78rem; font-weight: 700; letter-spacing: 0.1em;
+      text-transform: uppercase; color: var(--gold-dim); margin-bottom: 6px;
+    }
+    .dash-greeting h1 {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(1.8rem, 3vw, 2.4rem);
+      font-weight: 900; color: var(--navy); line-height: 1.2;
+    }
+    .dash-greeting h1 em { font-style: normal; color: var(--gold-dim); }
+
+    /* ── GRID ── */
+    .dash-grid {
+      display: grid;
+      grid-template-columns: 320px 1fr;
+      gap: 24px;
+      align-items: start;
+    }
+    @media (max-width: 860px) {
+      .dash-grid { grid-template-columns: 1fr; }
+    }
+
+    /* ── CARDS ── */
+    .card {
+      background: var(--white);
+      border-radius: 20px;
+      border: 1px solid rgba(11,31,74,0.07);
+      box-shadow: 0 2px 16px rgba(11,31,74,0.06);
+      overflow: hidden;
+    }
+
+    /* ── PROFILE CARD ── */
+    .profile-card {
+      animation: fadeUp 0.6s 0.1s ease both;
+    }
+
+    .profile-banner {
+      height: 80px;
+      background: linear-gradient(135deg, var(--navy) 0%, var(--navy-light) 100%);
+      position: relative;
+      overflow: hidden;
+    }
+    .profile-banner::after {
+      content: '';
+      position: absolute; inset: 0;
+      background: radial-gradient(ellipse at 70% 50%, rgba(245,200,66,0.2), transparent 65%);
+    }
+
+    .profile-body { padding: 0 24px 24px; }
+
+    .profile-avatar-wrap {
+      margin-top: -32px;
+      margin-bottom: 14px;
+      position: relative;
+      width: fit-content;
+    }
+    .profile-avatar {
+      width: 64px; height: 64px; border-radius: 50%;
+      border: 3px solid var(--white);
+      background: var(--navy-light);
+      object-fit: cover;
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'Playfair Display', serif;
+      font-size: 1.4rem; font-weight: 700; color: var(--gold);
+      overflow: hidden;
+    }
+    .profile-avatar img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
+    .level-badge {
+      position: absolute; bottom: 0; right: -4px;
+      background: var(--gold);
+      color: var(--navy);
+      font-size: 0.6rem; font-weight: 700;
+      padding: 2px 6px; border-radius: 100px;
+      border: 2px solid var(--white);
+      white-space: nowrap;
+    }
+
+    .profile-name {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.15rem; font-weight: 700; color: var(--navy);
+    }
+    .profile-email {
+      font-size: 0.8rem; color: var(--slate); margin-top: 2px;
+    }
+
+    /* XP Bar */
+    .xp-section { margin-top: 18px; }
+    .xp-top {
+      display: flex; justify-content: space-between; align-items: center;
+      margin-bottom: 8px;
+    }
+    .xp-label-left {
+      display: flex; align-items: center; gap: 5px;
+      font-size: 0.78rem; font-weight: 600; color: var(--gold-dim);
+    }
+    .xp-label-left svg { width: 14px; height: 14px; }
+    .xp-label-right { font-size: 0.75rem; color: var(--slate); }
+    .xp-bar {
+      height: 8px; background: rgba(11,31,74,0.08);
+      border-radius: 100px; overflow: hidden;
+    }
+    .xp-fill {
+      height: 100%; width: 0%;
+      background: linear-gradient(90deg, var(--gold-dim), var(--gold));
+      border-radius: 100px;
+      transition: width 1.2s cubic-bezier(.22,.68,0,1.2);
+    }
+    .xp-next { font-size: 0.72rem; color: var(--slate); margin-top: 5px; }
+
+    /* Stats row */
+    .stats-row {
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: 10px; margin-top: 18px;
+    }
+    .stat-box {
+      background: rgba(11,31,74,0.03);
+      border: 1px solid rgba(11,31,74,0.07);
+      border-radius: 12px;
+      padding: 12px 14px;
+      display: flex; align-items: center; gap: 10px;
+    }
+    .stat-box-icon {
+      width: 32px; height: 32px; flex-shrink: 0;
+      background: rgba(245,200,66,0.12);
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      color: var(--gold-dim);
+    }
+    .stat-box-icon svg { width: 16px; height: 16px; }
+    .stat-box-val { font-size: 1.1rem; font-weight: 700; color: var(--navy); line-height: 1; }
+    .stat-box-lbl { font-size: 0.7rem; color: var(--slate); margin-top: 2px; }
+
+    /* Badges */
+    .badges-section { margin-top: 18px; }
+    .badges-title {
+      font-size: 0.75rem; font-weight: 700; letter-spacing: 0.08em;
+      text-transform: uppercase; color: var(--slate); margin-bottom: 10px;
+    }
+    .badges-wrap { display: flex; gap: 8px; flex-wrap: wrap; }
+    .badge-pill {
+      display: flex; align-items: center; gap: 5px;
+      background: rgba(11,31,74,0.05);
+      border: 1px solid rgba(11,31,74,0.1);
+      border-radius: 100px;
+      padding: 5px 12px;
+      font-size: 0.75rem; color: var(--slate);
+    }
+    .badge-pill.earned {
+      background: rgba(245,200,66,0.1);
+      border-color: rgba(245,200,66,0.35);
+      color: var(--gold-dim);
+    }
+    .badge-pill svg { width: 13px; height: 13px; }
+
+    /* ── RIGHT COLUMN ── */
+    .right-col {
+      display: flex; flex-direction: column; gap: 24px;
+    }
+
+    /* Start Quiz CTA card */
+    .start-card {
+      background: var(--navy);
+      border-radius: 20px;
+      padding: 32px 36px;
+      display: flex; align-items: center; justify-content: space-between; gap: 24px;
+      position: relative; overflow: hidden;
+      animation: fadeUp 0.6s 0.15s ease both;
+      flex-wrap: wrap;
+    }
+    .start-card::before {
+      content: '';
+      position: absolute; top: -60px; right: -40px;
+      width: 220px; height: 220px;
+      background: radial-gradient(circle, rgba(245,200,66,0.15), transparent 65%);
+      pointer-events: none;
+    }
+    .start-card-text { position: relative; z-index: 1; }
+    .start-card-text .label {
+      font-size: 0.75rem; font-weight: 700; letter-spacing: 0.09em;
+      text-transform: uppercase; color: rgba(245,200,66,0.6); margin-bottom: 6px;
+    }
+    .start-card-text h2 {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.5rem; font-weight: 900; color: var(--white); line-height: 1.2;
+    }
+    .start-card-text h2 em { font-style: normal; color: var(--gold); }
+    .start-card-text p {
+      font-size: 0.88rem; color: var(--slate); margin-top: 6px; line-height: 1.55;
+    }
+
+    .btn-primary {
+      position: relative; z-index: 1;
+      background: var(--gold);
+      color: var(--navy);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.95rem; font-weight: 700;
+      padding: 13px 28px;
+      border: none; border-radius: var(--radius);
+      cursor: pointer; text-decoration: none;
+      display: inline-flex; align-items: center; gap: 8px;
+      transition: background 0.2s, transform 0.15s, box-shadow 0.2s;
+      box-shadow: 0 4px 20px rgba(245,200,66,0.3);
+      white-space: nowrap;
+    }
+    .btn-primary:hover {
+      background: var(--gold-dim);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 28px rgba(245,200,66,0.4);
+    }
+    .btn-primary svg { width: 18px; height: 18px; }
+
+    /* Past Quizzes card */
+    .quizzes-card {
+      animation: fadeUp 0.6s 0.2s ease both;
+    }
+    .card-header {
+      padding: 22px 24px 0;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .card-header h3 {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.1rem; font-weight: 700; color: var(--navy);
+      display: flex; align-items: center; gap: 8px;
+    }
+    .card-header h3 svg { width: 18px; height: 18px; color: var(--gold-dim); }
+    .card-body { padding: 20px 24px 24px; }
+
+    /* Empty state */
+    .empty-state {
+      display: flex; flex-direction: column; align-items: center;
+      text-align: center; padding: 40px 20px;
+      gap: 14px;
+    }
+    .empty-icon {
+      width: 64px; height: 64px;
+      background: rgba(11,31,74,0.05);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      color: var(--slate);
+    }
+    .empty-icon svg { width: 28px; height: 28px; }
+    .empty-state h4 {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.05rem; font-weight: 700; color: var(--navy);
+    }
+    .empty-state p {
+      font-size: 0.85rem; color: var(--slate); line-height: 1.6; max-width: 280px;
+    }
+    .btn-ghost {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: transparent;
+      border: 1.5px solid rgba(11,31,74,0.15);
+      color: var(--navy);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.85rem; font-weight: 600;
+      padding: 9px 20px; border-radius: 10px;
+      cursor: pointer; text-decoration: none;
+      transition: border-color 0.2s, background 0.2s;
+    }
+    .btn-ghost:hover {
+      border-color: var(--gold); background: rgba(245,200,66,0.06); color: var(--gold-dim);
+    }
+    .btn-ghost svg { width: 15px; height: 15px; }
+
+    /* Loading skeleton */
+    .skeleton {
+      background: linear-gradient(90deg, rgba(11,31,74,0.06) 25%, rgba(11,31,74,0.1) 50%, rgba(11,31,74,0.06) 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.4s infinite;
+      border-radius: 8px;
+    }
+    @keyframes shimmer {
+      from { background-position: 200% 0; }
+      to   { background-position: -200% 0; }
+    }
+
+    /* Auth guard overlay */
+    .auth-loading {
+      position: fixed; inset: 0;
+      background: var(--navy);
+      display: flex; align-items: center; justify-content: center;
+      z-index: 999;
+      flex-direction: column; gap: 16px;
+      transition: opacity 0.4s;
+    }
+    .auth-loading.hidden { opacity: 0; pointer-events: none; }
+    .auth-loading .spin {
+      width: 40px; height: 40px;
+      border: 3px solid rgba(245,200,66,0.2);
+      border-top-color: var(--gold);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    .auth-loading p { font-size: 0.85rem; color: var(--slate); }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    @media (max-width: 640px) {
+      .nav-name { display: none; }
+      .start-card { padding: 24px; }
+      .start-card-text h2 { font-size: 1.25rem; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- Auth loading overlay -->
+<div class="auth-loading" id="auth-loading">
+  <div class="spin"></div>
+  <p>Loading your dashboard…</p>
+</div>
+
+<!-- NAV -->
+<nav>
+  <a href="index.html" class="nav-logo">
+    <div class="logo-icon"><i data-lucide="graduation-cap"></i></div>
+    <span>Course<b>Ready</b></span>
+  </a>
+  <div class="nav-right">
+    <div class="nav-user">
+      <div class="nav-avatar" id="nav-avatar">
+        <i data-lucide="user" style="width:16px;height:16px;color:var(--slate)"></i>
+      </div>
+      <span class="nav-name" id="nav-name">—</span>
+    </div>
+    <a href="/api/auth?action=logout" class="btn-logout">
+      <i data-lucide="log-out"></i> Logout
+    </a>
+  </div>
+</nav>
+
+<!-- DASHBOARD -->
+<main class="dashboard">
+
+  <!-- Greeting -->
+  <div class="dash-greeting">
+    <div class="label">Dashboard</div>
+    <h1>Welcome back, <em id="greet-name">Student</em>!</h1>
+  </div>
+
+  <div class="dash-grid">
+
+    <!-- LEFT: Profile Card -->
+    <aside>
+      <div class="card profile-card">
+        <div class="profile-banner"></div>
+        <div class="profile-body">
+
+          <div class="profile-avatar-wrap">
+            <div class="profile-avatar" id="profile-avatar">
+              <i data-lucide="user" style="width:28px;height:28px;color:var(--slate)"></i>
+            </div>
+            <div class="level-badge" id="level-badge">Lvl 1</div>
+          </div>
+
+          <div class="profile-name" id="profile-name">Loading…</div>
+          <div class="profile-email" id="profile-email">—</div>
+
+          <!-- XP Bar -->
+          <div class="xp-section">
+            <div class="xp-top">
+              <div class="xp-label-left">
+                <i data-lucide="zap"></i>
+                <span id="xp-level-label">Level 1 — Freshman</span>
+              </div>
+              <div class="xp-label-right"><span id="xp-current">0</span> / <span id="xp-max">500</span> XP</div>
+            </div>
+            <div class="xp-bar"><div class="xp-fill" id="xp-fill"></div></div>
+            <div class="xp-next" id="xp-next">Keep quizzing to level up!</div>
+          </div>
+
+          <!-- Stats -->
+          <div class="stats-row">
+            <div class="stat-box">
+              <div class="stat-box-icon"><i data-lucide="flame"></i></div>
+              <div>
+                <div class="stat-box-val" id="stat-streak">0</div>
+                <div class="stat-box-lbl">Day Streak</div>
+              </div>
+            </div>
+            <div class="stat-box">
+              <div class="stat-box-icon"><i data-lucide="book-open-check"></i></div>
+              <div>
+                <div class="stat-box-val" id="stat-quizzes">0</div>
+                <div class="stat-box-lbl">Quizzes Done</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Badges -->
+          <div class="badges-section">
+            <div class="badges-title">Badges</div>
+            <div class="badges-wrap" id="badges-wrap">
+              <div class="badge-pill">
+                <i data-lucide="lock"></i> First Quiz
+              </div>
+              <div class="badge-pill">
+                <i data-lucide="lock"></i> Perfect Score
+              </div>
+              <div class="badge-pill">
+                <i data-lucide="lock"></i> 5-Day Streak
+              </div>
+              <div class="badge-pill">
+                <i data-lucide="lock"></i> Top Student
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </aside>
+
+    <!-- RIGHT COLUMN -->
+    <div class="right-col">
+
+      <!-- Start Quiz CTA -->
+      <div class="start-card">
+        <div class="start-card-text">
+          <div class="label">Ready to begin?</div>
+          <h2>Test Your <em>College Readiness</em></h2>
+          <p>Pick your course and get an AI-generated quiz anchored to the CHED curriculum.</p>
+        </div>
+        <a href="quiz.html" class="btn-primary">
+          Start Quiz <i data-lucide="arrow-right"></i>
+        </a>
+      </div>
+
+      <!-- Past Quizzes -->
+      <div class="card quizzes-card">
+        <div class="card-header">
+          <h3><i data-lucide="history"></i> Past Quizzes</h3>
+        </div>
+        <div class="card-body">
+          <div class="empty-state" id="empty-quizzes">
+            <div class="empty-icon"><i data-lucide="clipboard-list"></i></div>
+            <h4>No quizzes yet</h4>
+            <p>Take your first quiz to see your readiness score and topic breakdown here.</p>
+            <a href="quiz.html" class="btn-ghost">
+              <i data-lucide="play"></i> Take Your First Quiz
+            </a>
+          </div>
+          <!-- Quiz history items will be injected here when available -->
+          <div id="quiz-history"></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</main>
+
+<script>
+  // ── Level config ──
+  const LEVELS = [
+    { level: 1, title: 'Freshman',     xpRequired: 0,    xpNext: 500  },
+    { level: 2, title: 'Sophomore',    xpRequired: 500,  xpNext: 1200 },
+    { level: 3, title: 'Junior',       xpRequired: 1200, xpNext: 2200 },
+    { level: 4, title: 'Scholar',      xpRequired: 2200, xpNext: 3500 },
+    { level: 5, title: 'Honor Student',xpRequired: 3500, xpNext: 5000 },
+    { level: 6, title: "Dean's Lister",xpRequired: 5000, xpNext: 5000 },
+  ];
+
+  function getLevelInfo(xp) {
+    let info = LEVELS[0];
+    for (const l of LEVELS) {
+      if (xp >= l.xpRequired) info = l;
+    }
+    return info;
+  }
+
+  // ── Parse session cookie ──
+  function getSession() {
+    const match = document.cookie.match(/(?:^|;\s*)cr_user=([^;]+)/);
+    if (!match) return null;
+    try { return JSON.parse(atob(match[1])); } catch { return null; }
+  }
+
+  // ── Populate UI ──
+  function populateDashboard(user) {
+    const firstName = (user.name || 'Student').split(' ')[0];
+
+    // Greeting + nav
+    document.getElementById('greet-name').textContent = firstName;
+    document.getElementById('nav-name').textContent = firstName;
+
+    // Nav avatar
+    const navAvatar = document.getElementById('nav-avatar');
+    if (user.picture) {
+      navAvatar.innerHTML = `<img src="${user.picture}" alt="${user.name}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">`;
+    } else {
+      navAvatar.textContent = firstName.charAt(0).toUpperCase();
+    }
+
+    // Profile avatar
+    const profileAvatar = document.getElementById('profile-avatar');
+    if (user.picture) {
+      profileAvatar.innerHTML = `<img src="${user.picture}" alt="${user.name}">`;
+    } else {
+      profileAvatar.innerHTML = `<span style="font-family:'Playfair Display',serif;font-size:1.6rem;font-weight:700;color:var(--gold)">${firstName.charAt(0)}</span>`;
+    }
+
+    document.getElementById('profile-name').textContent = user.name || 'Student';
+    document.getElementById('profile-email').textContent = user.email || '';
+
+    // XP & level
+    const xp = user.xp || 0;
+    const lvl = getLevelInfo(xp);
+    const xpIntoLevel = xp - lvl.xpRequired;
+    const xpRange = lvl.xpNext - lvl.xpRequired;
+    const pct = lvl.level === 6 ? 100 : Math.round((xpIntoLevel / xpRange) * 100);
+
+    document.getElementById('level-badge').textContent = `Lvl ${lvl.level}`;
+    document.getElementById('xp-level-label').textContent = `Level ${lvl.level} — ${lvl.title}`;
+    document.getElementById('xp-current').textContent = xp;
+    document.getElementById('xp-max').textContent = lvl.level === 6 ? 'MAX' : lvl.xpNext;
+    document.getElementById('xp-next').textContent =
+      lvl.level === 6 ? "You've reached the top!" : `${lvl.xpNext - xp} XP to Level ${lvl.level + 1} — ${LEVELS[lvl.level].title}`;
+
+    // Animate XP bar after short delay
+    setTimeout(() => {
+      document.getElementById('xp-fill').style.width = pct + '%';
+    }, 300);
+
+    // Streak + quizzes
+    document.getElementById('stat-streak').textContent = user.streak || 0;
+    document.getElementById('stat-quizzes').textContent = user.quizzesDone || 0;
+
+    // Badges — unlock based on user data
+    const badges = user.badges || [];
+    const badgeDefs = [
+      { id: 'first_quiz',    icon: 'target',  label: 'First Quiz'    },
+      { id: 'perfect_score', icon: 'trophy',  label: 'Perfect Score' },
+      { id: 'streak_5',      icon: 'flame',   label: '5-Day Streak'  },
+      { id: 'top_student',   icon: 'star',    label: 'Top Student'   },
+    ];
+    const wrap = document.getElementById('badges-wrap');
+    wrap.innerHTML = badgeDefs.map(b => {
+      const earned = badges.includes(b.id);
+      return `<div class="badge-pill ${earned ? 'earned' : ''}">
+        <i data-lucide="${earned ? b.icon : 'lock'}"></i> ${b.label}
+      </div>`;
+    }).join('');
+  }
+
+  // ── Auth guard ──
+  function init() {
+    const user = getSession();
+    const overlay = document.getElementById('auth-loading');
+
+    if (!user) {
+      // Not logged in → redirect to login
+      window.location.href = '/login.html';
+      return;
+    }
+
+    populateDashboard(user);
+
+    // Hide loading overlay
+    overlay.classList.add('hidden');
+    setTimeout(() => overlay.remove(), 500);
+
+    // Init Lucide icons
+    lucide.createIcons();
+  }
+
+  init();
+</script>
+</body>
+</html>
