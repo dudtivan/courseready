@@ -5,7 +5,34 @@
 
 export const config = { runtime: 'edge' };
 
-const GROQ_API_KEY = process.env.GROQ_API_KEY;
+const GROQ_API_KEYS = [
+  process.env.GROQ_API_KEY_1,
+  process.env.GROQ_API_KEY_2,
+].filter(Boolean);
+
+async function callGroq(payload) {
+  for (const apiKey of GROQ_API_KEYS) {
+    const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(payload),
+    });
+
+    if (res.status === 429 || res.status === 503) {
+      continue;
+    }
+
+    return res;
+  }
+
+  return new Response(
+    JSON.stringify({ error: 'All Groq API keys are rate limited. Try again later.' }),
+    { status: 429 }
+  );
+}
 
 export default async function handler(req) {
   if (req.method !== 'POST') {
@@ -16,23 +43,22 @@ export default async function handler(req) {
   try { body = await req.json(); }
   catch { return new Response(JSON.stringify({ error: 'Invalid JSON' }), { status: 400 }); }
 
-  if (!GROQ_API_KEY) {
-    return new Response(JSON.stringify({ error: 'GROQ_API_KEY not configured' }), { status: 500 });
+  if (GROQ_API_KEYS.length === 0) {
+    return new Response(JSON.stringify({ error: 'No GROQ API keys configured' }), { status: 500 });
   }
 
   // ── Motivation mode ──
   if (body.motivation) {
-    const groqRes = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-      method: 'POST',
-      headers: { 'Authorization': `Bearer ${GROQ_API_KEY}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model: 'llama-3.3-70b-versatile',
-        messages: [{ role: 'user', content: body.prompt }],
-        temperature: 0.9,
-        max_tokens: 200,
-        stream: true,
-      }),
+    const groqRes = await callGroq({
+      model: 'llama-3.3-70b-versatile',
+      messages: [{ role: 'user', content: body.prompt }],
+      temperature: 0.9,
+      max_tokens: 200,
+      stream: true,
     });
+
+    if (groqRes.status === 429) return groqRes;
+
     return new Response(groqRes.body, {
       headers: { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache' },
     });
@@ -63,17 +89,15 @@ Respond ONLY with a valid JSON array. No explanation, no markdown, no code fence
 
 Generate ${numQuestions} questions for ${course} now:`;
 
-  const groqRes = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-    method: 'POST',
-    headers: { 'Authorization': `Bearer ${GROQ_API_KEY}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      model: 'llama-3.3-70b-versatile',
-      messages: [{ role: 'user', content: prompt }],
-      temperature: 0.7,
-      max_tokens: 4000,
-      stream: true,
-    }),
+  const groqRes = await callGroq({
+    model: 'llama-3.3-70b-versatile',
+    messages: [{ role: 'user', content: prompt }],
+    temperature: 0.7,
+    max_tokens: 4000,
+    stream: true,
   });
+
+  if (groqRes.status === 429) return groqRes;
 
   if (!groqRes.ok) {
     const err = await groqRes.text();
